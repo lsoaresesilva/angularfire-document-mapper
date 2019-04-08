@@ -112,7 +112,7 @@ class Dog extends Document{
     }
     
     objectToDocument(){
-      let document = super().objectToDocument();
+      let document = super.objectToDocument();
       document["personId"] = this.person.pk(); // retrieves the primary key of Person.
     }
     
