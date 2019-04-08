@@ -13,7 +13,7 @@ Clone the repository as a submodule to your Angular project: git submodule add h
 
 1. Create a class to represent a Firestore's Document and extends from Document
 
-'''javascript
+```javascript
 
 import {Document, Collection} from './angularfire-document-mapper/document';
 
@@ -28,7 +28,7 @@ class Person extends Document{
   }
 
 }
-'''
+```
 
 2. Configure your Firebase account, install AngularFire2 and import AngularFirestore, AngularFireModule to your project's module, as suggested in: https://github.com/angular/angularfire2/blob/master/docs/install-and-setup.md
 
@@ -36,7 +36,7 @@ class Person extends Document{
 
 4. In your app.module or any other module, import DocumentModule:
 
-'''javascript
+```javascript
 
 import { DocumentModule } from './angularfire-document-mapper/document.module';
 
@@ -44,10 +44,11 @@ import { DocumentModule } from './angularfire-document-mapper/document.module';
   imports: [
     DocumentModule,
    ]
-'''
+```
 
 5. Use your Person's object insided a component:
 
+```javascript
 @Component({})
 class Component{
 
@@ -93,11 +94,11 @@ class Component{
         })
      }
 }
-'''
+```
 
 6. It is also possible to work with relationships:
 
-'''javascript
+```javascript
 
 @Collection("dog")
 class Dog extends Document{
