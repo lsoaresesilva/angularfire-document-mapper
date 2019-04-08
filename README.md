@@ -146,4 +146,8 @@ class Component{
      })
 
 }
-'''
+```
+
+# License
+
+MIT
