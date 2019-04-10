@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import {AppInjector} from './app-injector';
 import { FireStoreDocument } from './firestoreDocument';
 import Query from './query';
+import * as firebase from 'firebase';
 
 export function Collection(nome){
     return function(target){
@@ -16,12 +17,58 @@ export function Collection(nome){
     }
 }
 
+export function ignore() {
+
+    function actualDecorator(target, property: string | symbol): void {
+        if (target.__ignore == undefined)
+                Object.defineProperty(target, '__ignore', {
+                    value: [],
+                    writable: true,
+                    enumerable: true
+                })
+            
+            target.__ignore.push(property);
+    }
+    
+    // return the decorator
+    return actualDecorator;
+}
+
+export function date() {
+
+    function actualDecorator(target, property: string | symbol): void {
+        if (target.__ignore == undefined)
+                Object.defineProperty(target, '__date', {
+                    value: [],
+                    writable: true,
+                    enumerable: true
+                })
+            target.property = "";
+            target.__date.push(property);
+    }
+    
+    // return the decorator
+    return actualDecorator;
+}
+
 export class Document{
 
     db:AngularFirestore;
 
     constructor(protected id){
         this.db = AppInjector.get(AngularFirestore);
+        this.constructDateObjects();
+    }
+
+    /**
+     * @date annotation does not create date properties in Documents child's class. This method create those properties (empty as they will be populated when sent to database).
+     */
+    constructDateObjects(){
+        if(this["__date"] != undefined && this["__date"].length > 0){
+            this["__date"].forEach(dateObject=>{
+                this[dateObject] = "";
+            })
+        }
     }
 
     static documentToObject(document){
@@ -37,10 +84,19 @@ export class Document{
 
     objectToDocument(){
         let object = {}
-        Reflect.ownKeys(this).forEach(propriedade => {
 
-            if (typeof this[propriedade] != "function" && typeof this[propriedade] != "object")
-                object[propriedade] = this[propriedade]
+        let x =  Reflect.ownKeys(this);
+        Reflect.ownKeys(this).forEach(propriedade => {
+            let propriedadesIgnoradas = this["__ignore"];
+            if (typeof this[propriedade] != "function" && typeof this[propriedade] != "object" && !this["__ignore"].includes(propriedade)){
+                if(this["__date"].includes(propriedade))
+                    object[propriedade] = firebase.firestore.FieldValue.serverTimestamp();
+                else{
+                    object[propriedade] = this[propriedade]
+                }
+                
+            }
+                
         });
 
         return object
@@ -147,7 +203,7 @@ export class Document{
             
             let collection: AngularFirestoreCollection<any> = db.collection<any>(this["__name"]);
             collection.doc(id).delete().then(resultado=>{
-                console.log(resultado);
+                
                 observer.next(true);
                 observer.complete();
             }).catch(err=>{
