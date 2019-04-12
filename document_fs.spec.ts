@@ -192,11 +192,15 @@ describe("Document testing", () => {
 
     it("deve carregar todos documents corretamente", (done) => {
 
+      let p = new Person(null);
+      p.name = "Apu";
+      p.save().subscribe(resultado=>{
       
-      Person.getAll().subscribe(resultado => {
-        expect(resultado.length).toBeGreaterThan(1)
-        done();
-      })
+        Person.getAll().subscribe(resultado => {
+          expect(resultado.length).toBe(1)
+          done();
+        })
+      });
       
     })
 
@@ -343,8 +347,6 @@ describe("Document testing", () => {
 
       
     })
-    
-  
 
   // INÍCIO DOS TESTES DE FIRESTORE DOCUMENT
   

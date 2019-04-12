@@ -1,6 +1,6 @@
 import { throws } from 'assert';
 import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
+import { Observable, forkJoin } from 'rxjs';
 
 import {AppInjector} from './app-injector';
 import { FireStoreDocument } from './firestoreDocument';
@@ -88,12 +88,15 @@ export class Document{
         let x =  Reflect.ownKeys(this);
         Reflect.ownKeys(this).forEach(propriedade => {
             let propriedadesIgnoradas = this["__ignore"];
-            if (typeof this[propriedade] != "function" && typeof this[propriedade] != "object" && !this["__ignore"].includes(propriedade)){
-                if(this["__date"].includes(propriedade))
-                    object[propriedade] = firebase.firestore.FieldValue.serverTimestamp();
-                else{
-                    object[propriedade] = this[propriedade]
+            if (typeof this[propriedade] != "function" && typeof this[propriedade] != "object"){
+                if( this["__ignore"] == undefined || (this["__ignore"] != undefined && !this["__ignore"].includes(propriedade))){
+                    if(this["__date"] != undefined && this["__date"].includes(propriedade))
+                        object[propriedade] = firebase.firestore.FieldValue.serverTimestamp();
+                    else{
+                        object[propriedade] = this[propriedade]
+                    }
                 }
+                
                 
             }
                 
@@ -165,6 +168,9 @@ export class Document{
 
                 observer.next(objetos);
                 observer.complete();
+            }, err=>{
+                observer.next(objetos);
+                observer.complete();
             })
         })
     }
@@ -185,8 +191,18 @@ export class Document{
                     documents.push(this.delete(documento.id))
                 })
 
-                observer.next(counter);
-                observer.complete();
+                if(documents.length > 0 ){
+                    forkJoin(documents).subscribe(resultado=>{
+                        observer.next(resultado.length);
+                        observer.complete();
+                    })
+                }else{
+                    observer.next(counter);
+                    observer.complete();
+                }
+
+
+                
             })
 
             
