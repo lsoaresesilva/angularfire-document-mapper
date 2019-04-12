@@ -148,6 +148,52 @@ class Component{
 }
 ```
 
+# Ignoring fields
+
+It is possible to not persist some fields of your class, just use the @ignore decorator:
+
+```javascript
+
+import { Document, Collection, ignore } from './firestore/document';
+
+@Collection("persons")
+class Person extends Document{
+
+  name;
+  @ignore()
+  secretField;
+
+  constructor(id, name){
+    super(id); // must be called
+    this.name = name;
+  }
+
+}
+```
+
+# Date field
+
+To use Firebase's server timestamp as a date time you can use @date decorator:
+
+```javascript
+
+import { Document, Collection, date } from './firestore/document';
+
+@Collection("persons")
+class Person extends Document{
+
+  name;
+  @date()
+  bornDate;
+
+  constructor(id, name){
+    super(id); // must be called
+    this.name = name;
+  }
+
+}
+```
+
 # License
 
 MIT
