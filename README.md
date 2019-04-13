@@ -148,6 +148,39 @@ class Component{
 }
 ```
 
+# Multiple queries
+
+Suppose you want to retrieve a document from collection based on two attributes, we call it multiple queries.
+
+```javascript
+@Collection("persons")
+class Person extends Document{
+
+  constructor(id, public name, public age){
+    super(id); // must be called
+  }
+
+}
+
+@Component({})
+class Component{
+
+  constructor(){
+  
+    let queryOne = new Query("name", "==", "Leonardo");
+    let queryTwo = new Query("age", "==", "32");
+    let queries = [queryOne, queryTwo];
+    Person.getAll(queries).subscribe(result=>{
+      // Will query for a Person who has name Leonardo and age 32.
+    })
+  
+  }
+
+}
+
+
+```
+
 # Ignoring fields
 
 It is possible to not persist some fields of your class, just use the @ignore decorator:
