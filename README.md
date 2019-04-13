@@ -215,13 +215,11 @@ import { Document, Collection, date } from './firestore/document';
 @Collection("persons")
 class Person extends Document{
 
-  name;
   @date()
-  bornDate;
+  dateAdded;
 
-  constructor(id, name){
+  constructor(id, public name){
     super(id); // must be called
-    this.name = name;
   }
 
 }
