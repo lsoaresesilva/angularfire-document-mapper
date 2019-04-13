@@ -1,14 +1,13 @@
-import ResultadoTestCase from "../resultadoTestCase";
-import { Document, Collection } from './document';
+import { Document, Collection } from '../document';
 import { AngularFirestore, AngularFirestoreModule, PersistenceSettingsToken } from '@angular/fire/firestore';
 import { TestBed, inject } from '@angular/core/testing';
 import { AngularFireModule, FirebaseApp } from '@angular/fire';
 import { FirebaseConfiguracao } from 'src/environments/firebase';
-import { DocumentModule } from './document.module';
-import { FireStoreDocument } from './firestoreDocument';
-import { Person } from './models';
+import { DocumentModule } from '../document.module';
+import { FireStoreDocument } from '../firestoreDocument';
+import { Person } from '../models';
 import { forkJoin } from 'rxjs';
-import Query from './query';
+import Query from '../query';
 
 describe("Document testing", () => {
 
@@ -217,6 +216,23 @@ describe("Document testing", () => {
       
       
     })
+
+    it("deve carregar todos documents corretamente a partir de uma query múltipla", (done) => {
+
+      let p = new Person(null);
+      p.name = "Apu";
+      p.idade = "4";
+
+      p.save().subscribe(resultado=>{
+        Person.getAll([new Query("name", "==", "Apu"), new Query("idade", "==", "4")]).subscribe(resultado => {
+          expect(resultado.length).toBe(1);
+          expect(resultado[0]["name"]).toBe("Apu");
+          done();
+        })
+      })
+      
+      
+    })
       
 
     // Testes de delete
@@ -337,7 +353,7 @@ describe("Document testing", () => {
 
       let c3 = new Car(null);
       c3.name = "d"
-
+      console.log("travou aqui");
       forkJoin([c.save(), c2.save(), c3.save()]).subscribe(resultado=>{
         Car.deleteAll().subscribe(resultado=>{
           expect(resultado).toBe(3);
@@ -352,12 +368,18 @@ describe("Document testing", () => {
   
   it("deve validar true para um firestore document válido", (done) => {
     try{
-      let document: any = afs.doc<any>("assunto/dFfoRKSwBjEN1aJWVkgr");
-      document.get({ source: "server" }).subscribe(result => {
-        let f = new FireStoreDocument(result);
-        expect(f.validate(result)).toBeTruthy();
-        done();
-      });
+      let p = new Person(null);
+      p.name = "l";
+      p.save().subscribe(resultado=>{
+        
+        let document: any = afs.doc<any>("person/"+resultado.id);
+        document.get({ source: "server" }).subscribe(result => {
+          let f = new FireStoreDocument(result);
+          expect(f.validate(result)).toBeTruthy();
+          done();
+        });
+      })
+      
     }catch(e){
       console.log(e)
     }

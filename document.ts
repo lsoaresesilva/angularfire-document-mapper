@@ -137,19 +137,19 @@ export class Document{
         })
     }
 
-    static buildCollection(db, collectionName, query:Query){
+    static buildCollection(db, collectionName, query){
         
         let collection: any = db.collection(collectionName);
         
-        if(query != null){
-            collection = db.collection(collectionName, ref=>ref.where(query.column, query.operator, query.value));
-            
+        if(query != null ){
+            //collection = db.collection(collectionName, ref=>ref.where(query.column, query.operator, query.value));
+            collection = db.collection(collectionName, ref=>Query.build(ref, query));
         }
 
         return collection;
     }
 
-    static getAll(query:Query=null):Observable<any[]>{
+    static getAll(query=null):Observable<any[]>{
         let db = this.getAngularFirestore();
         let objetos = []
         Document.prerequisitos(this["__name"], db);

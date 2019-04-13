@@ -5,6 +5,7 @@ import { Document, Collection } from './document'
 export class Person extends Document{
   
   name;
+  idade;
 
   constructor(id){
     super(id);
