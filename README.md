@@ -104,16 +104,12 @@ class Component{
 class Dog extends Document{
 
     name;
+    @oneToOne
     person:Person;
     
     constructor(id, person){
       super(id); // must be called
       this.person = person;
-    }
-    
-    objectToDocument(){
-      let document = super.objectToDocument();
-      document["personId"] = this.person.pk(); // retrieves the primary key of Person.
     }
     
 
