@@ -104,7 +104,7 @@ class Component{
 class Dog extends Document{
 
     name;
-    @oneToOne
+    @oneToOne("personId")
     person:Person;
     
     constructor(id, person){
