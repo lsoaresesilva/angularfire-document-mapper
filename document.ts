@@ -17,6 +17,22 @@ export function Collection(nome){
     }
 }
 
+export function oneToOne(name){
+    function actualDecorator(target, property: string | symbol): void {
+        if (target.__oneToOne == undefined)
+                Object.defineProperty(target, '__oneToOne', {
+                    value: [],
+                    writable: true,
+                    enumerable: true
+                })
+            
+            target.__oneToOne.push({property:property, foreignKeyName:name});
+    }
+    
+    // return the decorator
+    return actualDecorator;
+}
+
 export function ignore() {
 
     function actualDecorator(target, property: string | symbol): void {
@@ -51,13 +67,72 @@ export function date() {
     return actualDecorator;
 }
 
+/*
+export function lazy() {
+
+    function actualDecorator(target, property: string | symbol): void {
+        if (target.__ignore == undefined)
+                Object.defineProperty(target, '__lazy', {
+                    value: [],
+                    writable: true,
+                    enumerable: true
+                })
+            target.property = "";
+            target.__lazy.push(property);
+   
+    }
+
+    return actualDecorator;
+}
+
+
+ * This class is used to intercept a call to an attribute. When a property is marked as @lazy they will be retrivied from document only when needed.
+ *
+class ExtendableProxy {
+    constructor() {
+        return new Proxy(this, {
+            get: function(obj, prop, receiver) {
+                if( obj["__lazy"] != undefined && obj[prop] == undefined){
+                    let isLazy = false;
+                    obj["__lazy"].forEach(property=>{
+                        if(prop == property)
+                            isLazy = true;
+                    })
+                    let func = obj["getLazy"]; 
+                    if(isLazy && typeof func !== "undefined"){
+                        let r = null;
+                        let o = null;
+                        return new Observable(observer=>{
+                            o = observer;
+                            obj["getLazy"]().subscribe(resultado=>{
+                                observer.next(resultado);
+                                observer.complete();
+                            }, err=>{
+                                observer.error(err);
+                            });
+                        }).subscribe(res=>{
+                            o.next(res);
+                            o.complete();
+                        })
+                        
+                    }
+                }
+            
+                return obj[prop];
+            }
+        });
+    }
+}*/
+
 export class Document{
 
     db:AngularFirestore;
 
     constructor(protected id){
+        
         this.db = AppInjector.get(AngularFirestore);
         this.constructDateObjects();
+
     }
 
     /**
@@ -88,12 +163,28 @@ export class Document{
         let x =  Reflect.ownKeys(this);
         Reflect.ownKeys(this).forEach(propriedade => {
             let propriedadesIgnoradas = this["__ignore"];
-            if (typeof this[propriedade] != "function" && typeof this[propriedade] != "object"){
+            if (typeof this[propriedade] != "function"/* && typeof this[propriedade] != "object"*/){
                 if( this["__ignore"] == undefined || (this["__ignore"] != undefined && !this["__ignore"].includes(propriedade))){
                     if(this["__date"] != undefined && this["__date"].includes(propriedade))
                         object[propriedade] = firebase.firestore.FieldValue.serverTimestamp();
                     else{
-                        object[propriedade] = this[propriedade]
+                        // aqui usar o __oneToOne
+                        let tipo = typeof this[propriedade];
+                        if(typeof this[propriedade] == "object"){
+                            if(this["__oneToOne"] != undefined && this["__oneToOne"].length > 0){
+                                
+                                for(let i = 0; i < this["__oneToOne"].length; i++){
+                                    if(this["__oneToOne"][i].property == propriedade && typeof this[propriedade].pk === "function"){
+                                        object[this["__oneToOne"][i].foreignKeyName] = this[propriedade].pk();
+                                        break;
+                                    }
+                                }
+
+                            }
+                        }else{
+                            object[propriedade] = this[propriedade]
+                        }
+                        
                     }
                 }
                 
@@ -109,6 +200,27 @@ export class Document{
         return AppInjector.get(AngularFirestore);
     }
 
+    static getByQuery(query){
+        return new Observable(observer=>{
+            this.getAll(query).subscribe(resultado=>{
+                if(resultado.length > 0){
+                    observer.next(resultado[0])
+                    observer.complete();
+                }else{
+                    observer.error(new Error("Document not found."));
+                }
+            }, err=>{
+                observer.error(err);
+            })
+        })
+        
+    }
+
+    /**
+     * Get a document from collection.
+     * @param id 
+     * @returns Observable containing the document; or error if document does not exists.
+     */
     static get(id){
         
         if(id == null || id == undefined){
@@ -129,7 +241,7 @@ export class Document{
                     observer.next(object);
                     observer.complete();
                 } catch (e) {
-                    observer.error(e);
+                    observer.error(new Error("Document not found."));
                 } finally {
 
                 }

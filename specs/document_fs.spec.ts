@@ -1,4 +1,4 @@
-import { Document, Collection } from '../document';
+import { Document, Collection, oneToOne } from '../document';
 import { AngularFirestore, AngularFirestoreModule, PersistenceSettingsToken } from '@angular/fire/firestore';
 import { TestBed, inject } from '@angular/core/testing';
 import { AngularFireModule, FirebaseApp } from '@angular/fire';
@@ -42,6 +42,23 @@ describe("Document testing", () => {
     let p = new Person(null);
     p.name = "Leonardo"
     expect(p.objectToDocument()).toEqual({ name: "Leonardo" });
+  })
+
+  it('deve construir um objeto com a propriedade @oneToOne', () => {
+
+    class Animal extends Document{
+      
+      @oneToOne("personId")
+      person:Person;
+      name;
+    }
+
+    let p = new Person("12345");
+    let a = new Animal(null);
+    a.name = "Apu";
+    a.person = p;
+    expect(a.objectToDocument()).toEqual({name:"Apu", "personId":"12345"});
+  
   })
 
   it("deve criar um nome para a collection de uma classe", () => {
@@ -142,13 +159,15 @@ describe("Document testing", () => {
     Person["__name"] = oldName;
   })
 
+ 
+
 
   it('deve disparar um erro ao tentar carregar um documento que não existe', done => {
     Person.get(1).subscribe(resultado => {
 
     }, err => {
       expect(err).toBeDefined();
-      expect(err.message).toBe("O firestore document passado como parâmetro não é válido.");
+      expect(err.message).toBe("Document not found.");
       done();
     })
 
@@ -425,8 +444,8 @@ describe("Document testing", () => {
       document.get({ source: "server" }).subscribe(result => {
         let document = new FireStoreDocument(result);
         let data = document.primitiveData()
-        expect(data["id"]["value"]).toBe(p.pk())
-        expect(data["name"]["value"]).toBe(p.name);
+        expect(data["id"]).toBe(p.pk())
+        expect(data["name"]).toBe(p.name);
         done();
       });
     })
@@ -479,16 +498,6 @@ describe("Document testing", () => {
 
     expect(OutraClasse["__name"]).toEqual("outraclass");
   });
-
-  it("", () => {
-
-  })
-
-
-
-
-
-
   // FIM DOS TESTES DE FIRESTORE DOCUMENT
 
 })

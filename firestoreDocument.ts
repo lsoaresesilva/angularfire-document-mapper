@@ -68,25 +68,37 @@ export class FireStoreDocument {
             throw new Error("Os dados primitivos de um document são inválidos.");
         }
 
-        return Object.create(prototype, primitiveData)
+        //let x = Object.create(prototype, primitiveData);
+        let x = Object.create(prototype);
+        x.constructor();
+        for(let key in primitiveData){
+            x[key] = primitiveData[key];
+        }
+        
+        return x;
+        
     }
 
     primitiveData(){
-        let properties = {}
-        properties['id'] = {
+
+        let properties = {id:this.id, ...this.data};
+        /*properties['id'] = {
             value: this.id,
             writable: true,
             enumerable: true
-        }
+        }*/
+
+        //Object.defineProperties(properties, this.data);
         
         Reflect.ownKeys(this.data).forEach(element => {
 
 
-            properties[element] = {
+            /*properties[element] = {
                 value: this.data[element],
                 writable: true,
                 enumerable: true
-            }
+            }*/
+            
         });
 
         return properties;
