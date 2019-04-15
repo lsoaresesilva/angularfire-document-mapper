@@ -7,9 +7,11 @@ This project is based on the Active Record pattern (https://www.martinfowler.com
 
 It is easy as:
 
+```javascript
 let person = new Person("Leonardo");
 person.save().subscribe(result=>{});
 Person.getAll().subscribe(personsFromFireStore=>{});
+```
 
 
 # Instalation
