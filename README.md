@@ -104,16 +104,12 @@ class Component{
 class Dog extends Document{
 
     name;
+    @oneToOne("personId")
     person:Person;
     
     constructor(id, person){
       super(id); // must be called
       this.person = person;
-    }
-    
-    objectToDocument(){
-      let document = super.objectToDocument();
-      document["personId"] = this.person.pk(); // retrieves the primary key of Person.
     }
     
 
@@ -146,6 +142,39 @@ class Component{
      })
 
 }
+```
+
+# Multiple queries
+
+Suppose you want to retrieve a document from collection based on two attributes, we call it multiple queries.
+
+```javascript
+@Collection("persons")
+class Person extends Document{
+
+  constructor(id, public name, public age){
+    super(id); // must be called
+  }
+
+}
+
+@Component({})
+class Component{
+
+  constructor(){
+  
+    let queryOne = new Query("name", "==", "Leonardo");
+    let queryTwo = new Query("age", "==", "32");
+    let queries = [queryOne, queryTwo];
+    Person.getAll(queries).subscribe(result=>{
+      // Will query for a Person who has name Leonardo and age 32.
+    })
+  
+  }
+
+}
+
+
 ```
 
 # Ignoring fields
@@ -182,13 +211,11 @@ import { Document, Collection, date } from './firestore/document';
 @Collection("persons")
 class Person extends Document{
 
-  name;
   @date()
-  bornDate;
+  dateAdded;
 
-  constructor(id, name){
+  constructor(id, public name){
     super(id); // must be called
-    this.name = name;
   }
 
 }
