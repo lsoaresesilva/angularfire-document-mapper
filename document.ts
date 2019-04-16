@@ -17,7 +17,7 @@ export function Collection(nome){
     }
 }
 
-export function oneToOne(name){
+export function oneToOne(data){
     function actualDecorator(target, property: string | symbol): void {
         if (target.__oneToOne == undefined)
                 Object.defineProperty(target, '__oneToOne', {
@@ -26,7 +26,7 @@ export function oneToOne(name){
                     enumerable: true
                 })
             
-            target.__oneToOne.push({property:property, foreignKeyName:name});
+            target.__oneToOne.push({property:property, foreignKeyName:data.name, type:data.type});
     }
     
     // return the decorator
@@ -232,14 +232,20 @@ export class Document{
         Document.prerequisitos(this["__name"], db);
 
         return new Observable(observer=>{
+            let n = this["__name"];
             let document: any = db.doc<any>(this["__name"] + "/" + id);
         
             document.get({ source: "server" }).subscribe(result => {
 
                 try {
-                    let object = new FireStoreDocument(result).toObject(this["prototype"]);
+                    /*let object = new FireStoreDocument(result).toObject(this["prototype"]);
                     observer.next(object);
-                    observer.complete();
+                    observer.complete();*/
+                    new FireStoreDocument(result).toObject(this["prototype"]).subscribe(resultado=>{
+                        let object = resultado;
+                        observer.next(object);
+                        observer.complete();
+                    })
                 } catch (e) {
                     observer.error(new Error("Document not found."));
                 } finally {
@@ -274,12 +280,23 @@ export class Document{
 
 
             collection.get({ source: "server" }).subscribe(resultados => {
+                let consultas = []
                 resultados.docs.forEach(document => {
-                    objetos.push(new FireStoreDocument(document).toObject(this["prototype"]));
+                    consultas.push(new FireStoreDocument(document).toObject(this["prototype"]));
+                    //objetos.push(new FireStoreDocument(document).toObject(this["prototype"]));
                 });
+                if(consultas.length > 0){
+                    forkJoin(consultas).subscribe(resultados=>{
+                        objetos = resultados;
+                    })
 
-                observer.next(objetos);
-                observer.complete();
+                    observer.next(objetos);
+                    observer.complete();
+                }else{
+                    observer.next(objetos);
+                    observer.complete();
+                }
+                
             }, err=>{
                 observer.next(objetos);
                 observer.complete();

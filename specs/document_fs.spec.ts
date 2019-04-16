@@ -37,6 +37,33 @@ describe("Document testing", () => {
       done();
     })
   })
+
+  it('deve recuperar um objeto com @onetoOne', (done) => {
+
+    @Collection("animais")
+    class Animal extends Document{
+      
+      @oneToOne({name:"personId", type:Person})
+      person:Person;
+      name;
+    }
+
+    let p = new Person(null);
+    let a = new Animal(null);
+    a.name = "Apu";
+    a.person = p;
+    console.log("animal");
+    p.save().subscribe(person=>{
+      a.save().subscribe(resultado=>{
+        Animal.get(resultado.id).subscribe(animal=>{
+          expect(animal["person"].pk()).toBe(person.id);
+          done();
+        })
+      })
+    })
+    
+  
+  })
   
   it("deve criar um plain object a partir de um objeto javascript", () => {
     let p = new Person(null);
@@ -48,7 +75,7 @@ describe("Document testing", () => {
 
     class Animal extends Document{
       
-      @oneToOne("personId")
+      @oneToOne({name:"personId", type:Person})
       person:Person;
       name;
     }
@@ -60,6 +87,8 @@ describe("Document testing", () => {
     expect(a.objectToDocument()).toEqual({name:"Apu", "personId":"12345"});
   
   })
+
+  
 
   it("deve criar um nome para a collection de uma classe", () => {
     let p = new Person(null);
@@ -372,7 +401,6 @@ describe("Document testing", () => {
 
       let c3 = new Car(null);
       c3.name = "d"
-      console.log("travou aqui");
       forkJoin([c.save(), c2.save(), c3.save()]).subscribe(resultado=>{
         Car.deleteAll().subscribe(resultado=>{
           expect(resultado).toBe(3);
@@ -462,11 +490,16 @@ describe("Document testing", () => {
         document.primitiveData = function () {
           return null;
         }
-        expect(function () {
+        /*expect(function () {
           document.toObject(Person.prototype)
-        }).toThrow();
+        }).toThrow();*/
+        document.toObject(Person.prototype).subscribe(resultado=>{
+          fail();
+        }, err=>{ 
+          done();
+        })
 
-        done();
+        
       });
     })
   })
@@ -478,12 +511,16 @@ describe("Document testing", () => {
       let document: any = afs.doc<any>(Person["__name"] + "/" + p.pk());
       document.get({ source: "server" }).subscribe(result => {
         let document = new FireStoreDocument(result);
-        let object = document.toObject(Person.prototype);
-        expect(object instanceof Person).toBeTruthy();
-        expect(object["id"]).toBeTruthy();
-        expect(object["id"]).toBe(p.pk())
-        expect(object["name"]).toBe(p.name);
-        done();
+        document.toObject(Person.prototype).subscribe(resultado=>{
+          expect(resultado instanceof Person).toBeTruthy();
+          expect(resultado["id"]).toBeTruthy();
+          expect(resultado["id"]).toBe(p.pk())
+          expect(resultado["name"]).toBe(p.name);
+          done();
+        }, err=>{
+          fail();
+        });
+        
       });
     })
   })
@@ -499,5 +536,5 @@ describe("Document testing", () => {
     expect(OutraClasse["__name"]).toEqual("outraclass");
   });
   // FIM DOS TESTES DE FIRESTORE DOCUMENT
-
+  
 })

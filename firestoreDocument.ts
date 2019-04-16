@@ -13,19 +13,19 @@ export class FireStoreDocument {
         this.data = data
     }*/
 
-    constructor(document){
-        if(this.validate(document)){
+    constructor(document) {
+        if (this.validate(document)) {
             this.create(document);
-        }else{
+        } else {
             throw new Error("O firestore document passado como parâmetro não é válido.");
         }
     }
 
-    create(document){
+    create(document) {
         let id;
         let data;
-        
-        if(document.payload != undefined){
+
+        if (document.payload != undefined) {
             if (document.payload.doc == undefined) {
                 data = document.payload.data();
                 id = document.payload.id;
@@ -34,7 +34,7 @@ export class FireStoreDocument {
                 data = document.payload.doc.data();
                 id = document.payload.doc.id;
             }
-        }else{
+        } else {
             data = document.data();
             id = document.id;
         }
@@ -47,41 +47,89 @@ export class FireStoreDocument {
     validate(document) {
 
         // Os códigos foram comentados, pois ao carregar um documento do Firestore, mesmo existindo, a variável exists está vindo false. Verificar o por que.
-        if(document != null || document != undefined){
+        if (document != null || document != undefined) {
             if (document.payload != undefined /*&& document.payload.exists != undefined && document.payload.exists == true*/ && (typeof document.payload.data == "function" || (document.payload.doc != undefined && typeof document.payload.doc.data == "function"))) {
                 return true;
             }/*else if(typeof document.data == "function" && document._document != undefined){
                 return true;
-            }*/else if(document.exists != undefined && document.exists == true){
+            }*/else if (document.exists != undefined && document.exists == true) {
                 return true;
             }
         }
-        
+
 
         return false;
     }
 
-    toObject(prototype){
-        let primitiveData = this.primitiveData();
-        
-        if( primitiveData == null){
-            throw new Error("Os dados primitivos de um document são inválidos.");
-        }
+    toObject(prototype) {
+        return new Observable(observer => {
+            let primitiveData = this.primitiveData();
 
-        //let x = Object.create(prototype, primitiveData);
-        let x = Object.create(prototype);
-        x.constructor();
-        for(let key in primitiveData){
-            x[key] = primitiveData[key];
-        }
-        
-        return x;
-        
+            if (primitiveData == null) {
+                observer.error(new Error("Os dados primitivos de um document são inválidos."));
+            }
+
+
+
+            //
+
+            //let x = Object.create(prototype, primitiveData);
+            let x = Object.create(prototype);
+            x.constructor();
+            for (let key in primitiveData) {
+                x[key] = primitiveData[key];
+            }
+
+            let consultas = []
+            let propriedades = []
+            // verificar as propriedades _oneToOne
+            console.log(x["__oneToOne"]);
+            //Reflect.ownKeys(x).forEach(propriedade => {
+            if (x["__oneToOne"] != undefined && x["__oneToOne"].length > 0) {
+                x["__oneToOne"].forEach(oneToOne => {
+                    //if(oneToOne.property == propriedade){
+                    //let z = new oneToOne.type(x[oneToOne.foreignKeyName]);
+                    consultas.push(oneToOne.type.get(x[oneToOne.foreignKeyName])); // todo: if x[oneToOne.foreignKeyName] != undefined
+                    propriedades.push(oneToOne.property);
+                    /*oneToOne.type.get(oneToOne.foreignKeyName).subscribe(resultado => {
+                        let w = resultado;
+                        let p = w;
+                    });
+                    console.log(z);*/
+                    //}
+                })
+
+                
+            }
+
+            if(consultas.length > 0){
+                forkJoin(consultas).subscribe(resultados=>{
+                    // TODO: comparar tamanho desse array com de propriedaedes, se for difernete, não prossegue.
+                    for(let i  = 0; i < resultados.length; i++){
+                        x[propriedades[i]] = resultados[i];
+                    }
+
+                    observer.next(x);
+                    observer.complete();
+                }, err=>{
+                    observer.error(err);
+                })
+            }else{
+                observer.next(x);
+                observer.complete();
+            }
+        })
+
+
+        //})
+
+        //return x;
+
     }
 
-    primitiveData(){
+    primitiveData() {
 
-        let properties = {id:this.id, ...this.data};
+        let properties = { id: this.id, ...this.data };
         /*properties['id'] = {
             value: this.id,
             writable: true,
@@ -89,7 +137,7 @@ export class FireStoreDocument {
         }*/
 
         //Object.defineProperties(properties, this.data);
-        
+
         Reflect.ownKeys(this.data).forEach(element => {
 
 
@@ -98,7 +146,7 @@ export class FireStoreDocument {
                 writable: true,
                 enumerable: true
             }*/
-            
+
         });
 
         return properties;
