@@ -5,6 +5,15 @@ Every operation on database with AngularFire is a tedious and repetitive task. T
 
 This project is based on the Active Record pattern (https://www.martinfowler.com/eaaCatalog/activeRecord.html), and uses a class to wrap CRUD operations. You just use this class in your project as a base class for your Document's Class which will be persisted on Firestore.
 
+It is easy as:
+
+```javascript
+let person = new Person("Leonardo");
+person.save().subscribe(result=>{});
+Person.getAll().subscribe(personsFromFireStore=>{});
+```
+
+
 # Instalation
 
 Clone the repository as a submodule to your Angular project: git submodule add https://github.com/lsoaresesilva/angularfire-document-mapper.git
