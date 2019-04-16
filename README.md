@@ -105,7 +105,9 @@ class Component{
 }
 ```
 
-6. It is also possible to work with relationships:
+6. It is also possible to work with relationships (experimental support):
+
+I'm working to support automatic relationships, for example, when saving/geting an object, its relationship will be saved/get as well.
 
 ```javascript
 
@@ -113,7 +115,7 @@ class Component{
 class Dog extends Document{
 
     name;
-    @oneToOne("personId")
+    @oneToOne({name:"personId", type:Person)
     person:Person;
     
     constructor(id, person){
@@ -149,6 +151,8 @@ class Component{
         // dog is saved and has a column name personId with the person's ID.
       }) 
      })
+     
+   // When loading a dog, a person will 
 
 }
 ```
