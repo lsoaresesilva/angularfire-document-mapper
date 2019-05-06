@@ -164,7 +164,7 @@ export class Document{
         Reflect.ownKeys(this).forEach(propriedade => {
             let propriedadesIgnoradas = this["__ignore"];
             if (typeof this[propriedade] != "function"/* && typeof this[propriedade] != "object"*/){
-                if( this["__ignore"] == undefined || (this["__ignore"] != undefined && !this["__ignore"].includes(propriedade))){
+                if( this["__ignore"] == undefined || propriedade == "id" || (this["__ignore"] != undefined && !this["__ignore"].includes(propriedade))){
                     if(this["__date"] != undefined && this["__date"].includes(propriedade))
                         object[propriedade] = firebase.firestore.FieldValue.serverTimestamp();
                     else{
@@ -288,21 +288,25 @@ export class Document{
                 if(consultas.length > 0){
                     forkJoin(consultas).subscribe(resultados=>{
                         objetos = resultados;
+                        observer.next(objetos);
+                        observer.complete();
+                    }, err=>{ // TODO: todos os erros de get all devem ser retornados e não um objeto vazio
+                        observer.error(err);
                     })
 
-                    observer.next(objetos);
-                    observer.complete();
+                    
                 }else{
                     observer.next(objetos);
                     observer.complete();
                 }
                 
             }, err=>{
-                observer.next(objetos);
-                observer.complete();
+                observer.error(err);
             })
         })
     }
+
+    // TODO: use query
 
     static deleteAll(){
         let db = this.getAngularFirestore();
@@ -332,6 +336,8 @@ export class Document{
 
 
                 
+            }, err=>{
+                observer.error(err)
             })
 
             
@@ -339,6 +345,32 @@ export class Document{
             
         });
     }
+
+    // TODO: implementar
+    /*
+    static __deleteOneToOne(id){
+        return new Observable(observer=>{
+            if(this["__oneToOne"] != undefined && this["__oneToOne"].length > 0){
+                                
+                for(let i = 0; i < this["__oneToOne"].length; i++){
+    
+                    if( typeof this["__oneToOne"][i].type.getAll === "function" && typeof this["__oneToOne"][i].type.delete === "function" && typeof this[this["__oneToOne"][i].property].pk === "function" )
+                        this["__oneToOne"][i].type.getAll(new Query(this["__oneToOne"][i].foreignKeyName, "==", id)).subscribe(results=>{
+                            results.forEach(result=>{
+                                if( typeof result.pk === "function")
+                                    this["__oneToOne"][i].type.delete(result.pk()); 
+                            })
+                            
+                        })
+                }
+    
+            }else{
+                observer.next(true)
+                observer.complete();
+            }
+        })
+        
+    }*/
 
     static delete(id){
         let db = this.getAngularFirestore();
@@ -348,12 +380,16 @@ export class Document{
             
             let collection: AngularFirestoreCollection<any> = db.collection<any>(this["__name"]);
             collection.doc(id).delete().then(resultado=>{
-                
                 observer.next(true);
                 observer.complete();
+                /*this.__deleteOneToOne(id).subscribe(resultado=>{
+
+                }, ()=>{
+                    
+                })*/
+                
             }).catch(err=>{
-                observer.next(false);
-                observer.complete();
+                observer.error(err);
             });
             
         });

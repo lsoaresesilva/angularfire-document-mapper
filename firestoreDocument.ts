@@ -87,16 +87,10 @@ export class FireStoreDocument {
             //Reflect.ownKeys(x).forEach(propriedade => {
             if (x["__oneToOne"] != undefined && x["__oneToOne"].length > 0) {
                 x["__oneToOne"].forEach(oneToOne => {
-                    //if(oneToOne.property == propriedade){
-                    //let z = new oneToOne.type(x[oneToOne.foreignKeyName]);
-                    consultas.push(oneToOne.type.get(x[oneToOne.foreignKeyName])); // todo: if x[oneToOne.foreignKeyName] != undefined
-                    propriedades.push(oneToOne.property);
-                    /*oneToOne.type.get(oneToOne.foreignKeyName).subscribe(resultado => {
-                        let w = resultado;
-                        let p = w;
-                    });
-                    console.log(z);*/
-                    //}
+                    if(x[oneToOne.foreignKeyName] != undefined){
+                        consultas.push(oneToOne.type.get(x[oneToOne.foreignKeyName])); // todo: if 
+                        propriedades.push(oneToOne.property); // TODO: salvar também  otipo para fazer uma comparação no forkjoin abaixo
+                    }
                 })
 
                 
@@ -104,7 +98,7 @@ export class FireStoreDocument {
 
             if(consultas.length > 0){
                 forkJoin(consultas).subscribe(resultados=>{
-                    // TODO: comparar tamanho desse array com de propriedaedes, se for difernete, não prossegue.
+                    // TODO: comparar tamanho desse array com de propriedaedes, se for diferente, não prossegue. Significa que teve menos resultados localizados que a quantidade de propriedades
                     for(let i  = 0; i < resultados.length; i++){
                         x[propriedades[i]] = resultados[i];
                     }
