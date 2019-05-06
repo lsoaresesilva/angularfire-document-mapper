@@ -170,7 +170,7 @@ export class Document {
         let x = Reflect.ownKeys(this);
         Reflect.ownKeys(this).forEach(propriedade => {
             let propriedadesIgnoradas = this["__ignore"];
-            if (typeof this[propriedade] != "function"/* && typeof this[propriedade] != "object"*/) {
+            if (typeof this[propriedade] != "function" && typeof this[propriedade] != "undefined"/* && typeof this[propriedade] != "object"*/) {
                 if (this["__ignore"] == undefined || (this["__ignore"] != undefined && !this["__ignore"].includes(propriedade))) {
                     if (this["__date"] != undefined && this["__date"].includes(propriedade))
                         object[propriedade] = firebase.firestore.FieldValue.serverTimestamp();
