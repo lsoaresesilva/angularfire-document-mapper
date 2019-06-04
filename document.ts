@@ -137,7 +137,7 @@ export class Document {
         this.db = AppInjector.get(AngularFirestore);
         /*const settings = { experimentalForceLongPolling: true };
         this.db.firestore.app.firestore().settings( settings );*/
-        
+
         this.constructDateObjects();
 
     }
@@ -233,7 +233,6 @@ export class Document {
      * @returns Observable containing the document; or error if document does not exists.
      */
     static get(id) {
-
         if (id == null || id == undefined) {
             throw new Error("ID não posse ser vazio.");
         }
@@ -249,9 +248,6 @@ export class Document {
             document.get({ source: "server" }).subscribe(result => {
 
                 try {
-                    /*let object = new FireStoreDocument(result).toObject(this["prototype"]);
-                    observer.next(object);
-                    observer.complete();*/
                     new FireStoreDocument(result).toObject(this["prototype"]).subscribe(resultado => {
                         let object = resultado;
                         observer.next(object);
@@ -301,17 +297,17 @@ export class Document {
                         objetos = resultados;
                         observer.next(objetos);
                         observer.complete();
-                    }, err=>{
+                    }, err => {
                         observer.error(err);
                     })
 
-                    
-                }else{
+
+                } else {
                     observer.next(objetos);
                     observer.complete();
                 }
-                
-            }, err=>{
+
+            }, err => {
                 observer.error(err);
             })
         })
@@ -319,7 +315,7 @@ export class Document {
 
     // TODO: use query
 
-    static deleteAll(){
+    static deleteAll() {
         let db = this.getAngularFirestore();
         Document.prerequisitos(this["__name"], db);
 
@@ -346,8 +342,8 @@ export class Document {
                 }
 
 
-                
-            }, err=>{
+
+            }, err => {
                 observer.error(err)
             })
 
@@ -399,24 +395,33 @@ export class Document {
         let ___this = this;
 
         return new Observable(observer => {
-            let document = ___this.objectToDocument();
+            try {
+                let document = ___this.objectToDocument();
 
-            if (document["id"] != undefined) {
-                let docRef = this.db.collection<any>(this.constructor["__name"]).doc(document["id"]);
-                delete document["id"] // id cannot be in the document, as it isnt an attribute.
-                docRef.update(document).then(result => {
-                    observer.next(___this);
-                    observer.complete();
-                });
-            } else {
-                let collection: AngularFirestoreCollection<any> = this.db.collection<any>(this.constructor["__name"]);
+                if (document["id"] != undefined) {
+                    let docRef = this.db.collection<any>(this.constructor["__name"]).doc(document["id"]);
+                    delete document["id"] // id cannot be in the document, as it isnt an attribute.
+                    docRef.update(document).then(result => {
+                        observer.next(___this);
+                        observer.complete();
+                    }).catch(err => {
+                        observer.error(err);
+                    });
+                } else {
+                    let collection: AngularFirestoreCollection<any> = this.db.collection<any>(this.constructor["__name"]);
 
-                collection.add(document).then(result => {
-                    ___this.id = result.id;
-                    observer.next(___this);
-                    observer.complete();
-                });
+                    collection.add(document).then(result => {
+                        ___this.id = result.id;
+                        observer.next(___this);
+                        observer.complete();
+                    }).catch(err => {
+                        observer.error(err);
+                    });
+                }
+            } catch (err) {
+                observer.error(err);
             }
+
 
         });
     }
