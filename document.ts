@@ -254,7 +254,7 @@ export class Document {
                         observer.complete();
                     })
                 } catch (e) {
-                    observer.error(new Error("Document not found."));
+                    observer.error(new Error("Document not found. Collection: "+this["__name"]+". ID: "+id));
                 } finally {
 
                 }
@@ -274,7 +274,7 @@ export class Document {
         return collection;
     }
 
-    static getAll(query = null): Observable<any[]> {
+    static getAll(query = null, orderBy = null): Observable<any[]> {
         let db = this.getAngularFirestore();
         let objetos = []
         Document.prerequisitos(this["__name"], db);
@@ -285,6 +285,8 @@ export class Document {
             //let collection: any = this.buildCollection(db, this["__name"], null);
             let collection = this.buildCollection(db, this["__name"], query)
 
+            if(orderBy != null)
+                collection.orderBy(orderBy);
 
             collection.get({ source: "server" }).subscribe(resultados => {
                 let consultas = []
