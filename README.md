@@ -104,7 +104,6 @@ class Component{
      }
 }
 ```
-
 6. It is also possible to work with relationships (experimental support):
 
 I'm working to support automatic relationships, for example, when saving/geting an object, its relationship will be saved/get as well.
@@ -156,6 +155,29 @@ class Component{
 
 }
 ```
+
+# Using order by
+
+You can specify the order of documents by using the attribute orderBy in getAll. It accepts an string with the name of the document's property to order.
+
+```javascript
+@Collection("persons")
+class Person extends Document{
+
+  name;
+  age;
+
+  constructor(id, name){
+    super(id); // must be called
+    this.name = name;
+  }
+
+}
+
+Person.getAll(null, "age").subscribe(results=>{
+    // results are ordered by age.
+});
+``` 
 
 # Multiple queries
 
