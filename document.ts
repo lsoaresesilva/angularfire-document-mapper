@@ -274,6 +274,19 @@ export class Document {
         return collection;
     }
 
+    static count(){
+        return new Observable(observer=>{
+            let count = 0;
+            this.getAll().subscribe(results=>{
+                observer.next(results.length);
+                observer.complete();
+            }, err=>{
+                observer.error(err);
+            })
+        })
+        
+    }
+
     static getAll(query = null, orderBy = null): Observable<any[]> {
         let db = this.getAngularFirestore();
         let objetos = []
@@ -315,8 +328,8 @@ export class Document {
         })
     }
 
-    // TODO: use query
 
+    // TODO: incluir a opção de deletar por query
     static deleteAll() {
         let db = this.getAngularFirestore();
         Document.prerequisitos(this["__name"], db);
