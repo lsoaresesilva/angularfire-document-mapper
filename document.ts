@@ -7,6 +7,10 @@ import { FireStoreDocument } from './firestoreDocument';
 import Query from './query';
 import * as firebase from 'firebase';
 
+export default class DocumentNotFoundError extends Error{
+
+}
+
 export function Collection(nome) {
     return function (target) {
         target.__name = nome;
@@ -153,10 +157,6 @@ export class Document {
         }
     }
 
-    static documentToObject(document) {
-
-    }
-
     /**
      * Retrievies the primary key of this document.
      */
@@ -218,7 +218,7 @@ export class Document {
                     observer.next(resultado[0])
                     observer.complete();
                 } else {
-                    observer.error(new Error("Document not found."));
+                    observer.error(new DocumentNotFoundError("Documento não encontrado."));
                 }
             }, err => {
                 observer.error(err);
@@ -233,6 +233,8 @@ export class Document {
      * @returns Observable containing the document; or error if document does not exists.
      */
     static get(id) {
+        console.log("Get")
+        console.log(this["__name"]);
         if (id == null || id == undefined) {
             throw new Error("ID não posse ser vazio.");
         }
@@ -248,11 +250,9 @@ export class Document {
             document.get({ source: "server" }).subscribe(result => {
 
                 try {
-                    new FireStoreDocument(result).toObject(this["prototype"]).subscribe(resultado => {
-                        let object = resultado;
-                        observer.next(object);
-                        observer.complete();
-                    })
+                    observer.next(new FireStoreDocument(result).toObject(this["prototype"]));
+                    observer.complete();
+                    
                 } catch (e) {
                     observer.error(new Error("Document not found. Collection: "+this["__name"]+". ID: "+id));
                 } finally {
@@ -290,6 +290,7 @@ export class Document {
     static getAll(query = null, orderBy = null): Observable<any[]> {
         let db = this.getAngularFirestore();
         let objetos = []
+        console.log(this["__name"]);
         Document.prerequisitos(this["__name"], db);
 
         // TODO: migrar os códigos acima para dentro do observable, em um try/catch e no catch, em caso de erro, lançar um observer.error
@@ -302,25 +303,13 @@ export class Document {
                 collection.orderBy(orderBy);
 
             collection.get({ source: "server" }).subscribe(resultados => {
-                let consultas = []
+                
+                let i = 0;
                 resultados.docs.forEach(document => {
-                    consultas.push(new FireStoreDocument(document).toObject(this["prototype"]));
-                    //objetos.push(new FireStoreDocument(document).toObject(this["prototype"]));
+                    objetos.push(new FireStoreDocument(document).toObject(this["prototype"]))
                 });
-                if (consultas.length > 0) {
-                    forkJoin(consultas).subscribe(resultados => {
-                        objetos = resultados;
-                        observer.next(objetos);
-                        observer.complete();
-                    }, err => {
-                        observer.error(err);
-                    })
-
-
-                } else {
-                    observer.next(objetos);
-                    observer.complete();
-                }
+                observer.next(objetos);
+                observer.complete();
 
             }, err => {
                 observer.error(err);
