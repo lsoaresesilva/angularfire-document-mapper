@@ -218,7 +218,8 @@ export class Document {
                     observer.next(resultado[0])
                     observer.complete();
                 } else {
-                    observer.error(new DocumentNotFoundError("Documento não encontrado."));
+                    observer.next(null);
+                    observer.complete();
                 }
             }, err => {
                 observer.error(err);
