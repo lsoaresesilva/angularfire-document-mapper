@@ -7,72 +7,71 @@ import { FireStoreDocument } from './firestoreDocument';
 import Query from './query';
 import * as firebase from 'firebase';
 
-export default class DocumentNotFoundError extends Error{
-
-}
+export default class DocumentNotFoundError extends Error {}
 
 export function Collection(nome) {
-    return function (target) {
-        target.__name = nome;
-        //target["__name"] = nome;
-        Object.assign(target, {
-            __name: nome
-        });
-    }
+  return function (target) {
+    target.__name = nome;
+    // target["__name"] = nome;
+    Object.assign(target, {
+      __name: nome,
+    });
+  };
 }
 
 /**
  * Formato: name e type
- * @param data 
+ * @param data
  */
 export function oneToOne(data) {
-    function actualDecorator(target, property: string | symbol): void {
-        if (target.__oneToOne == undefined)
-            Object.defineProperty(target, '__oneToOne', {
-                value: [],
-                writable: true,
-                enumerable: true
-            })
-
-        target.__oneToOne.push({ property: property, foreignKeyName: data.name, type: data.type });
+  function actualDecorator(target, property: string | symbol): void {
+    if (target.__oneToOne == undefined) {
+      Object.defineProperty(target, '__oneToOne', {
+        value: [],
+        writable: true,
+        enumerable: true,
+      });
     }
 
-    // return the decorator
-    return actualDecorator;
+    target.__oneToOne.push({ property: property, foreignKeyName: data.name, type: data.type });
+  }
+
+  // return the decorator
+  return actualDecorator;
 }
 
 export function ignore() {
-
-    function actualDecorator(target, property: string | symbol): void {
-        if (target.__ignore == undefined)
-            Object.defineProperty(target, '__ignore', {
-                value: [],
-                writable: true,
-                enumerable: true
-            })
-
-        target.__ignore.push(property);
+  function actualDecorator(target, property: string | symbol): void {
+    if (target.__ignore == undefined) {
+      Object.defineProperty(target, '__ignore', {
+        value: [],
+        writable: true,
+        enumerable: true,
+      });
     }
 
-    // return the decorator
-    return actualDecorator;
+    target.__ignore.push(property);
+  }
+
+  // return the decorator
+  return actualDecorator;
 }
 
 export function date() {
-
-    function actualDecorator(target, property: string | symbol): void {
-        if (target.__ignore == undefined)
-            Object.defineProperty(target, '__date', {
-                value: [],
-                writable: true,
-                enumerable: true
-            })
-        target.property = "";
-        target.__date.push(property);
+  function actualDecorator(target, property: string | symbol): void {
+    if (target.__ignore == undefined) {
+      Object.defineProperty(target, '__date', {
+        value: [],
+        writable: true,
+        enumerable: true,
+      });
     }
+    target.property = '';
+    target.__date.push(property);
+  }
 
-    // return the decorator
-    return actualDecorator;
+  // return the decorator
+  return actualDecorator;
 }
 
 /*
@@ -87,7 +86,7 @@ export function lazy() {
                 })
             target.property = "";
             target.__lazy.push(property);
-   
+
     }
 
     return actualDecorator;
@@ -106,7 +105,7 @@ class ExtendableProxy {
                         if(prop == property)
                             isLazy = true;
                     })
-                    let func = obj["getLazy"]; 
+                    let func = obj["getLazy"];
                     if(isLazy && typeof func !== "undefined"){
                         let r = null;
                         let o = null;
@@ -122,10 +121,10 @@ class ExtendableProxy {
                             o.next(res);
                             o.complete();
                         })
-                        
+
                     }
                 }
-            
+
                 return obj[prop];
             }
         });
@@ -133,304 +132,330 @@ class ExtendableProxy {
 }*/
 
 export class Document {
-
-    db: AngularFirestore;
-
-    constructor(protected id) {
-
-        this.db = AppInjector.get(AngularFirestore);
-        /*const settings = { experimentalForceLongPolling: true };
+  constructor(protected id) {
+    this.db = AppInjector.get(AngularFirestore);
+    /*const settings = { experimentalForceLongPolling: true };
         this.db.firestore.app.firestore().settings( settings );*/
 
-        this.constructDateObjects();
+    this.constructDateObjects();
+  }
+  db: AngularFirestore;
 
+  static getAngularFirestore() {
+    return AppInjector.get(AngularFirestore);
+  }
+
+  static getDaysInterval = function (start, end): any[] {
+    const datas = [];
+    for (const dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
+      datas.push(new Date(dt));
     }
+    return datas;
+  };
 
-    /**
-     * @date annotation does not create date properties in Documents child's class. This method create those properties (empty as they will be populated when sent to database).
-     */
-    constructDateObjects() {
-        if (this["__date"] != undefined && this["__date"].length > 0) {
-            this["__date"].forEach(dateObject => {
-                this[dateObject] = "";
-            })
-        }
-    }
+  static filterDocumentsByDate(documents, dateField, start, end) {
+    const filteredDocuments = [];
+    if (Array.isArray(documents) && documents.length > 0) {
+      const dateInterval = this.getDaysInterval(end, start);
 
-    /**
-     * Retrievies the primary key of this document.
-     */
-    pk() {
-        return this.id;
-    }
+      dateInterval.forEach((data) => {
+        documents.forEach((document) => {
+          const date = document[dateField].toDate();
 
-    objectToDocument() {
-        let object = {}
-
-        let x = Reflect.ownKeys(this);
-        Reflect.ownKeys(this).forEach(propriedade => {
-            let propriedadesIgnoradas = this["__ignore"];
-            if (typeof this[propriedade] != "function" && typeof this[propriedade] != "undefined"/* && typeof this[propriedade] != "object"*/) {
-                if (this["__ignore"] == undefined || (this["__ignore"] != undefined && !this["__ignore"].includes(propriedade))) {
-                    if (this["__date"] != undefined && this["__date"].includes(propriedade))
-                        object[propriedade] = firebase.firestore.FieldValue.serverTimestamp();
-                    else {
-                        // aqui usar o __oneToOne
-                        let tipo = typeof this[propriedade];
-                        if (typeof this[propriedade] == "object") {
-                            if (this["__oneToOne"] != undefined && this["__oneToOne"].length > 0) {
-
-                                for (let i = 0; i < this["__oneToOne"].length; i++) {
-                                    if (this["__oneToOne"][i].property == propriedade && typeof this[propriedade].pk === "function") {
-                                        object[this["__oneToOne"][i].foreignKeyName] = this[propriedade].pk();
-                                        break;
-                                    }
-                                }
-
-                            }
-                        } else {
-                            object[propriedade] = this[propriedade]
-                        }
-
-                    }
-                }
-
-
-            }
-
+          if (date.toDateString() === data.toDateString()) {
+            filteredDocuments.push(document);
+          }
         });
+      });
+    }
 
-        if (this.id != undefined) {
-            object["id"] = this.id;
+    return filteredDocuments;
+  }
+
+  static getByQuery(query, orderBy = null) {
+    return new Observable((observer) => {
+      this.getAll(query, orderBy).subscribe(
+        (resultado) => {
+          if (resultado.length > 0) {
+            observer.next(resultado[0]);
+            observer.complete();
+          } else {
+            observer.next(null);
+            observer.complete();
+          }
+        },
+        (err) => {
+          observer.error(err);
         }
+      );
+    });
+  }
 
-        return object
+  /**
+   * Get a document from collection.
+   * @param id
+   * @returns Observable containing the document; or error if document does not exists.
+   */
+  static get(id) {
+    if (id == null || id == undefined) {
+      throw new Error('ID não posse ser vazio.');
     }
 
-    static getAngularFirestore() {
-        return AppInjector.get(AngularFirestore);
-    }
+    const db = this.getAngularFirestore();
 
-    static getByQuery(query) {
-        return new Observable(observer => {
-            this.getAll(query).subscribe(resultado => {
-                if (resultado.length > 0) {
-                    observer.next(resultado[0])
-                    observer.complete();
-                } else {
-                    observer.next(null);
-                    observer.complete();
-                }
-            }, err => {
-                observer.error(err);
-            })
-        })
+    Document.prerequisitos(this['__name'], db);
 
-    }
+    return new Observable((observer) => {
+      const n = this['__name'];
+      const document: any = db.doc<any>(this['__name'] + '/' + id);
 
-    /**
-     * Get a document from collection.
-     * @param id 
-     * @returns Observable containing the document; or error if document does not exists.
-     */
-    static get(id) {
-        console.log("Get")
-        console.log(this["__name"]);
-        if (id == null || id == undefined) {
-            throw new Error("ID não posse ser vazio.");
+      document.get({ source: 'server' }).subscribe((result) => {
+        try {
+          observer.next(new FireStoreDocument(result).toObject(this['prototype']));
+          observer.complete();
+        } catch (e) {
+          observer.error(
+            new Error('Document not found. Collection: ' + this['__name'] + '. ID: ' + id)
+          );
+        } finally {
         }
+      });
+    });
+  }
 
-        let db = this.getAngularFirestore();
+  static buildCollection(db, collectionName, query, orderByParam = null) {
+    let collection: any = db.collection(collectionName);
 
-        Document.prerequisitos(this["__name"], db);
-
-        return new Observable(observer => {
-            let n = this["__name"];
-            let document: any = db.doc<any>(this["__name"] + "/" + id);
-
-            document.get({ source: "server" }).subscribe(result => {
-
-                try {
-                    observer.next(new FireStoreDocument(result).toObject(this["prototype"]));
-                    observer.complete();
-                    
-                } catch (e) {
-                    observer.error(new Error("Document not found. Collection: "+this["__name"]+". ID: "+id));
-                } finally {
-
-                }
-            })
-        })
+    if (query != null) {
+      // collection = db.collection(collectionName, ref=>ref.where(query.column, query.operator, query.value));
+      if (orderByParam != null) {
+        collection = db.collection(collectionName, (ref) =>
+          Query.build(ref, query).orderBy(orderByParam)
+        );
+      } else {
+        collection = db.collection(collectionName, (ref) => Query.build(ref, query));
+      }
+    } else if (orderByParam != null) {
+      collection = db.collection(collectionName, (ref) => ref.orderBy(orderByParam));
     }
 
-    static buildCollection(db, collectionName, query) {
+    return collection;
+  }
 
-        let collection: any = db.collection(collectionName);
-
-        if (query != null) {
-            //collection = db.collection(collectionName, ref=>ref.where(query.column, query.operator, query.value));
-            collection = db.collection(collectionName, ref => Query.build(ref, query));
+  static count() {
+    return new Observable((observer) => {
+      const count = 0;
+      this.getAll().subscribe(
+        (results) => {
+          observer.next(results.length);
+          observer.complete();
+        },
+        (err) => {
+          observer.error(err);
         }
+      );
+    });
+  }
 
-        return collection;
-    }
+  static getAll(query = null, orderBy = null): Observable<any[]> {
+    const db = this.getAngularFirestore();
+    const objetos = [];
+    console.log(this['__name']);
+    Document.prerequisitos(this['__name'], db);
 
-    static count(){
-        return new Observable(observer=>{
-            let count = 0;
-            this.getAll().subscribe(results=>{
-                observer.next(results.length);
-                observer.complete();
-            }, err=>{
-                observer.error(err);
-            })
-        })
-        
-    }
+    // TODO: migrar os códigos acima para dentro do observable, em um try/catch e no catch, em caso de erro, lançar um observer.error
+    return new Observable((observer) => {
+      // let collection: any = this.buildCollection(db, this["__name"], null);
+      const collection = this.buildCollection(db, this['__name'], query, orderBy);
 
-    static getAll(query = null, orderBy = null): Observable<any[]> {
-        let db = this.getAngularFirestore();
-        let objetos = []
-        console.log(this["__name"]);
-        Document.prerequisitos(this["__name"], db);
+      collection.get({ source: 'server' }).subscribe(
+        (resultados) => {
+          const i = 0;
+          resultados.docs.forEach((document) => {
+            objetos.push(new FireStoreDocument(document).toObject(this['prototype']));
+          });
+          observer.next(objetos);
+          observer.complete();
+        },
+        (err) => {
+          observer.error(err);
+        }
+      );
+    });
+  }
 
-        // TODO: migrar os códigos acima para dentro do observable, em um try/catch e no catch, em caso de erro, lançar um observer.error
-        return new Observable(observer => {
+  // TODO: incluir a opção de deletar por query
+  static deleteAll() {
+    const db = this.getAngularFirestore();
+    Document.prerequisitos(this['__name'], db);
 
-            //let collection: any = this.buildCollection(db, this["__name"], null);
-            let collection = this.buildCollection(db, this["__name"], query)
+    return new Observable((observer) => {
+      let counter = 0;
 
-            if(orderBy != null)
-                collection.orderBy(orderBy);
+      this.getAll().subscribe(
+        (resultados) => {
+          const documents = [];
+          resultados.forEach((documento) => {
+            counter++;
+            documents.push(this.delete(documento.id));
+          });
 
-            collection.get({ source: "server" }).subscribe(resultados => {
-                
-                let i = 0;
-                resultados.docs.forEach(document => {
-                    objetos.push(new FireStoreDocument(document).toObject(this["prototype"]))
-                });
-                observer.next(objetos);
-                observer.complete();
-
-            }, err => {
-                observer.error(err);
-            })
-        })
-    }
-
-
-    // TODO: incluir a opção de deletar por query
-    static deleteAll() {
-        let db = this.getAngularFirestore();
-        Document.prerequisitos(this["__name"], db);
-
-        return new Observable(observer => {
-
-            let counter = 0;
-
-
-            this.getAll().subscribe(resultados => {
-                let documents = []
-                resultados.forEach(documento => {
-                    counter++;
-                    documents.push(this.delete(documento.id))
-                })
-
-                if (documents.length > 0) {
-                    forkJoin(documents).subscribe(resultado => {
-                        observer.next(resultado.length);
-                        observer.complete();
-                    })
-                } else {
-                    observer.next(counter);
-                    observer.complete();
-                }
-
-
-
-            }, err => {
-                observer.error(err)
-            })
-
-
-
-
-        });
-    }
-
-    static delete(id) {
-        let db = this.getAngularFirestore();
-        Document.prerequisitos(this["__name"], db);
-
-        return new Observable(observer => {
-
-            let collection: AngularFirestoreCollection<any> = db.collection<any>(this["__name"]);
-            collection.doc(id).delete().then(resultado => {
-
-                observer.next(true);
-                observer.complete();
-            }).catch(err => {
-                observer.next(false);
-                observer.complete();
+          if (documents.length > 0) {
+            forkJoin(documents).subscribe((resultado) => {
+              observer.next(resultado.length);
+              observer.complete();
             });
+          } else {
+            observer.next(counter);
+            observer.complete();
+          }
+        },
+        (err) => {
+          observer.error(err);
+        }
+      );
+    });
+  }
 
+  static delete(id) {
+    const db = this.getAngularFirestore();
+    Document.prerequisitos(this['__name'], db);
+
+    return new Observable((observer) => {
+      const collection: AngularFirestoreCollection<any> = db.collection<any>(this['__name']);
+      collection
+        .doc(id)
+        .delete()
+        .then((resultado) => {
+          observer.next(true);
+          observer.complete();
+        })
+        .catch((err) => {
+          observer.next(false);
+          observer.complete();
         });
+    });
+  }
+
+  /**
+   * Verifica se os pré-requisitos para execução de uma operação no Firestore estão sendo atendidos. Os pré-requisitos estabelecidos são: nome da collection e instância do AngularFirestore
+   * @param __name nome da collection
+   * @param db instância de AngularFirestore
+   */
+  static prerequisitos(__name, db) {
+    if (__name == undefined || __name == null) {
+      throw new Error('Não foi atribuído um nome para essa collection.');
     }
 
-
-    /**
-     * Verifica se os pré-requisitos para execução de uma operação no Firestore estão sendo atendidos. Os pré-requisitos estabelecidos são: nome da collection e instância do AngularFirestore
-     * @param __name nome da collection
-     * @param db instância de AngularFirestore
-     */
-    static prerequisitos(__name, db) {
-
-        if (__name == undefined || __name == null) {
-            throw new Error("Não foi atribuído um nome para essa collection.");
-        }
-
-        if (db == undefined || db == null) {
-            throw new Error("Não há uma instância de AngularFirestore.");
-        }
+    if (db == undefined || db == null) {
+      throw new Error('Não há uma instância de AngularFirestore.');
     }
+  }
 
-    save(): Observable<any> {
-        Document.prerequisitos(this.constructor["__name"], this.db);
+  /**
+   * @date annotation does not create date properties in Documents child's class. This method create those properties (empty as they will be populated when sent to database).
+   */
+  constructDateObjects() {
+    if (this['__date'] != undefined && this['__date'].length > 0) {
+      this['__date'].forEach((dateObject) => {
+        this[dateObject] = '';
+      });
+    }
+  }
 
-        let ___this = this;
+  /**
+   * Retrievies the primary key of this document.
+   */
+  pk() {
+    return this.id;
+  }
 
-        return new Observable(observer => {
-            try {
-                let document = ___this.objectToDocument();
+  objectToDocument() {
+    const object = {};
 
-                if (document["id"] != undefined) {
-                    let docRef = this.db.collection<any>(this.constructor["__name"]).doc(document["id"]);
-                    delete document["id"] // id cannot be in the document, as it isnt an attribute.
-                    docRef.update(document).then(result => {
-                        observer.next(___this);
-                        observer.complete();
-                    }).catch(err => {
-                        observer.error(err);
-                    });
-                } else {
-                    let collection: AngularFirestoreCollection<any> = this.db.collection<any>(this.constructor["__name"]);
-
-                    collection.add(document).then(result => {
-                        ___this.id = result.id;
-                        observer.next(___this);
-                        observer.complete();
-                    }).catch(err => {
-                        observer.error(err);
-                    });
+    const x = Reflect.ownKeys(this);
+    Reflect.ownKeys(this).forEach((propriedade) => {
+      const propriedadesIgnoradas = this['__ignore'];
+      if (
+        typeof this[propriedade] != 'function' &&
+        typeof this[propriedade] != 'undefined' /* && typeof this[propriedade] != "object"*/
+      ) {
+        if (
+          this['__ignore'] == undefined ||
+          (this['__ignore'] != undefined && !this['__ignore'].includes(propriedade))
+        ) {
+          if (this['__date'] != undefined && this['__date'].includes(propriedade)) {
+            object[propriedade] = firebase.firestore.FieldValue.serverTimestamp();
+          } else {
+            // aqui usar o __oneToOne
+            const tipo = typeof this[propriedade];
+            if (typeof this[propriedade] == 'object') {
+              if (this['__oneToOne'] != undefined && this['__oneToOne'].length > 0) {
+                for (let i = 0; i < this['__oneToOne'].length; i++) {
+                  if (
+                    this['__oneToOne'][i].property == propriedade &&
+                    typeof this[propriedade].pk === 'function'
+                  ) {
+                    object[this['__oneToOne'][i].foreignKeyName] = this[propriedade].pk();
+                    break;
+                  }
                 }
-            } catch (err) {
-                observer.error(err);
+              }
+            } else {
+              object[propriedade] = this[propriedade];
             }
+          }
+        }
+      }
+    });
 
-
-        });
+    if (this.id != undefined) {
+      object['id'] = this.id;
     }
 
+    return object;
+  }
 
+  save(): Observable<any> {
+    Document.prerequisitos(this.constructor['__name'], this.db);
 
+    const ___this = this;
+
+    return new Observable((observer) => {
+      try {
+        const document = ___this.objectToDocument();
+
+        if (document['id'] != undefined) {
+          const docRef = this.db.collection<any>(this.constructor['__name']).doc(document['id']);
+          delete document['id']; // id cannot be in the document, as it isnt an attribute.
+          docRef
+            .update(document)
+            .then((result) => {
+              observer.next(___this);
+              observer.complete();
+            })
+            .catch((err) => {
+              observer.error(err);
+            });
+        } else {
+          const collection: AngularFirestoreCollection<any> = this.db.collection<any>(
+            this.constructor['__name']
+          );
+
+          collection
+            .add(document)
+            .then((result) => {
+              ___this.id = result.id;
+              observer.next(___this);
+              observer.complete();
+            })
+            .catch((err) => {
+              observer.error(err);
+            });
+        }
+      } catch (err) {
+        observer.error(err);
+      }
+    });
+  }
 }
