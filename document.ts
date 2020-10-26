@@ -260,7 +260,6 @@ export class Document {
   static getAll(query = null, orderBy = null): Observable<any[]> {
     const db = this.getAngularFirestore();
     const objetos = [];
-    console.log(this['__name']);
     Document.prerequisitos(this['__name'], db);
 
     // TODO: migrar os códigos acima para dentro do observable, em um try/catch e no catch, em caso de erro, lançar um observer.error
