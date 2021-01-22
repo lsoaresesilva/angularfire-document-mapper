@@ -223,6 +223,30 @@ export class Document {
     });
   }
 
+  static search(query:Query){
+    return new Observable((observer) => {
+      const db = this.getAngularFirestore();
+      const objetos = [];
+      const collection = db.collection(this['__name'], (ref) => ref.orderBy(query.column).startAt(query.value).endAt(query.value+"\uf8ff"));
+      
+     
+
+      collection.get({ source: 'server' }).subscribe(
+        (resultados) => {
+          const i = 0;
+          resultados.docs.forEach((document) => {
+            objetos.push(new FireStoreDocument(document).toObject(this['prototype']));
+          });
+          observer.next(objetos);
+          observer.complete();
+        },
+        (err) => {
+          observer.error(err);
+        }
+      );
+    });
+  }
+
   static buildCollection(db, collectionName, query, orderByParam = null) {
     let collection: any = db.collection(collectionName);
 
