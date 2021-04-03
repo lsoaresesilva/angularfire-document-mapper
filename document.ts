@@ -281,6 +281,22 @@ export class Document {
     });
   }
 
+  static exportToJson(){
+    let json = {};
+    return new Observable(observer=>{
+      this.getAll().subscribe(documents=>{
+        json[this['__name']] = [];
+
+        documents.forEach(document=>{
+          json[this['__name']].push(document.toJson());
+        })
+        observer.next(JSON.stringify(json));
+        observer.complete()
+      })
+    })
+    
+  }
+
   static getAll(query = null, orderBy = null): Observable<any[]> {
     const db = this.getAngularFirestore();
     const objetos = [];
