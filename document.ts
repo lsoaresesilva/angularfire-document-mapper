@@ -172,7 +172,7 @@ export class Document {
     return filteredDocuments;
   }
 
-  static getByQuery(query, orderBy = null) {
+  static getByQuery(query, orderBy = null):Observable<any> {
     return new Observable((observer) => {
       this.getAll(query, orderBy).subscribe(
         (resultado) => {
@@ -196,7 +196,7 @@ export class Document {
    * @param id
    * @returns Observable containing the document; or error if document does not exists.
    */
-  static get(id) {
+  static get(id):Observable<any> {
     if (id == null || id == undefined) {
       throw new Error('ID não posse ser vazio.');
     }
