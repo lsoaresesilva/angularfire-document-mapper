@@ -256,6 +256,39 @@ class Person extends Document{
 }
 ```
 
+# Tracking changes in the document
+
+It is possible to track any change to a document, which is useful to update the client.
+
+```javascript
+
+@Collection("persons")
+class Person extends Document{
+
+  constructor(id, public name, public age){
+    super(id); // must be called
+  }
+
+}
+
+...
+
+function main(){
+
+  let callback = new Subject(); // Subject class from RxJS
+  callback.subscribe( documentUpdated => {
+  
+    // documentUpdated holds the document with new data.
+  
+  });
+  
+  Person.onDocumentUpdate("12345", callback); // 12345 is the id of the document in which we are interested to receive updates.
+
+}
+
+
+```
+
 # License
 
 MIT
