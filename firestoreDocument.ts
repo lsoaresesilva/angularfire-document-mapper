@@ -12,7 +12,7 @@ export class FireStoreDocument {
         this.data = data
     }*/
 
-  constructor(document) {
+  constructor(public document) {
     if (this.validate(document)) {
       this.create(document);
     } else {
@@ -76,6 +76,8 @@ export class FireStoreDocument {
     for (let key in primitiveData) {
       x[key] = primitiveData[key];
     }
+
+    x["doc"] = this.document;
 
     return x;
   }

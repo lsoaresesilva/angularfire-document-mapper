@@ -1,6 +1,6 @@
 import { throws } from 'assert';
 import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/firestore';
-import { Observable, forkJoin } from 'rxjs';
+import { Observable, forkJoin, Subject } from 'rxjs';
 
 import { AppInjector } from './app-injector';
 import { FireStoreDocument } from './firestoreDocument';
@@ -132,6 +132,10 @@ class ExtendableProxy {
 }*/
 
 export class Document {
+
+  db: AngularFirestore;
+  doc; // Reference to the document
+
   constructor(protected id) {
     this.db = AppInjector.get(AngularFirestore);
     /*const settings = { experimentalForceLongPolling: true };
@@ -139,7 +143,7 @@ export class Document {
 
     this.constructDateObjects();
   }
-  db: AngularFirestore;
+  
 
   static getAngularFirestore() {
     return AppInjector.get(AngularFirestore);
@@ -170,6 +174,46 @@ export class Document {
     }
 
     return filteredDocuments;
+  }
+
+  static onDocumentUpdate(id, callback:Subject<any>){
+    
+    const db = this.getAngularFirestore();
+
+    Document.prerequisitos(this['__name'], db);
+
+  
+    const n = this['__name'];
+    const document: any = db.doc<any>(this['__name'] + '/' + id);
+
+    document.snapshotChanges().subscribe(snapshot=>{
+      let object = new FireStoreDocument(snapshot).toObject(this['prototype']);
+      callback.next(object);
+      //callback.complete();
+    });
+      
+      /* document.get({ source: 'server' }).subscribe((result) => {
+        try {
+          let retrievedDocument = new FireStoreDocument(result).toObject(this['prototype']);
+ 
+          observer.next(retrievedDocument);
+          observer.complete();
+        } catch (e) {
+          observer.error(
+            new Error('Document not found. Collection: ' + this['__name'] + '. ID: ' + id)
+          );
+        } finally {
+        }
+      });
+    });
+
+
+    this.get(id).subscribe(object=>{
+      object.doc.onSnapshot(snapshot=>{
+        callback.next(snapshot);
+        callback.complete();
+      })
+    }) */
   }
 
   static getByQuery(query, orderBy = null):Observable<any> {
@@ -211,7 +255,9 @@ export class Document {
 
       document.get({ source: 'server' }).subscribe((result) => {
         try {
-          observer.next(new FireStoreDocument(result).toObject(this['prototype']));
+          let retrievedDocument = new FireStoreDocument(result).toObject(this['prototype']);
+ 
+          observer.next(retrievedDocument);
           observer.complete();
         } catch (e) {
           observer.error(
