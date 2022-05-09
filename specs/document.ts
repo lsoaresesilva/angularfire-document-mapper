@@ -70,7 +70,7 @@ export function date() {
     if(target.__date != null){
       target.__date.push(property);
     }
-
+   
   }
 
   // return the decorator
@@ -146,7 +146,7 @@ export class Document {
 
     this.constructDateObjects();
   }
-
+  
 
   static getAngularFirestore() {
     return AppInjector.get(AngularFirestore);
@@ -180,12 +180,12 @@ export class Document {
   }
 
   static onDocumentUpdate(id, callback:Subject<any>){
-
+    
     const db = this.getAngularFirestore();
 
     Document.prerequisitos(this['__name'], db);
 
-
+  
     const n = this['__name'];
     const document: any = db.doc<any>(this['__name'] + '/' + id);
 
@@ -194,11 +194,11 @@ export class Document {
       callback.next(object);
       //callback.complete();
     });
-
+      
       /* document.get({ source: 'server' }).subscribe((result) => {
         try {
           let retrievedDocument = new FireStoreDocument(result).toObject(this['prototype']);
-
+ 
           observer.next(retrievedDocument);
           observer.complete();
         } catch (e) {
@@ -259,7 +259,7 @@ export class Document {
       document.get({ source: 'server' }).subscribe((result) => {
         try {
           let retrievedDocument = new FireStoreDocument(result).toObject(this['prototype']);
-
+ 
           observer.next(retrievedDocument);
           observer.complete();
         } catch (e) {
@@ -277,8 +277,8 @@ export class Document {
       const db = this.getAngularFirestore();
       const objetos = [];
       const collection = db.collection(this['__name'], (ref) => ref.orderBy(query.column).startAt(query.value).endAt(query.value+"\uf8ff"));
-
-
+      
+     
 
       collection.get({ source: 'server' }).subscribe(
         (resultados) => {
@@ -330,7 +330,7 @@ export class Document {
     });
   }
 
-  static exportToJson(data_inicio=null, data_fim=null):Observable<string>{
+  static exportToJson():Observable<string>{
     let json = {};
     return new Observable(observer=>{
       this.getAll().subscribe(documents=>{
@@ -343,46 +343,7 @@ export class Document {
         observer.complete()
       })
     })
-
-  }
-
-  static exportToJsonFiltroData(data_inicio=null, data_fim=null):Observable<string>{
-    let json = {};
-    return new Observable(observer=>{
-      this.exportGetAll().subscribe(documents=>{
-        json[this['__name']] = [];
-
-        documents.forEach(document=>{
-          json[this['__name']].push(document.toJson());
-        })
-        observer.next(JSON.stringify(json));
-        observer.complete()
-      })
-    })
-
-  }
-
-  static exportGetAll(query = null, orderBy = null): Observable<any[]> {
-    return new Observable(observer=>{
-      const db = this.getAngularFirestore();
-      const objetos = [];
-      let collection = db.collection(this['__name'], (ref) => ref.orderBy("data").startAfter(new Date("2021-11-07")).endBefore(new Date("2021-12-31")));
-
-      collection.get({ source: 'server' }).subscribe(
-        (resultados) => {
-          const i = 0;
-          resultados.docs.forEach((document) => {
-            objetos.push(new FireStoreDocument(document).toObject(this['prototype']));
-          });
-          observer.next(objetos);
-          observer.complete();
-        },
-        (err) => {
-          observer.error(err);
-        }
-      );
-
-    })
+    
   }
 
   static getAll(query = null, orderBy = null): Observable<any[]> {
@@ -586,5 +547,5 @@ export class Document {
     });
   }
 
-
+  
 }
