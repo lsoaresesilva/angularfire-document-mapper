@@ -1,7 +1,7 @@
-import { Document, Collection, oneToOne } from '../document';
-import { AngularFirestore, AngularFirestoreModule } from '@angular/fire/firestore';
+/* import { Document, Collection, oneToOne } from '../document';
+import { AngularFirestore, AngularFirestoreModule } from '@angular/fire/compat/firestore';
 import { TestBed, inject } from '@angular/core/testing';
-import { AngularFireModule, FirebaseApp } from '@angular/fire';
+import { AngularFireModule, FirebaseApp } from '@angular/fire/compat';
 import { FirebaseConfiguracao } from 'src/environments/firebase';
 import { DocumentModule } from '../document.module';
 import { FireStoreDocument } from '../firestoreDocument';
@@ -417,9 +417,7 @@ describe('Document testing', () => {
         document.primitiveData = function () {
           return null;
         };
-        /*expect(function () {
-          document.toObject(Person.prototype)
-        }).toThrow();*/
+
         document.toObject(Person.prototype).subscribe(
           (resultado) => {
             fail();
@@ -465,3 +463,4 @@ describe('Document testing', () => {
   });
   // FIM DOS TESTES DE FIRESTORE DOCUMENT
 });
+ */

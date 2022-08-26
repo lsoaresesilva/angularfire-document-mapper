@@ -1,4 +1,4 @@
-import { AngularFirestore, AngularFirestoreModule } from "@angular/fire/firestore";
+/* import { AngularFirestore, AngularFirestoreModule } from "@angular/fire/compat/firestore";
 
 import { TestBed, inject } from "@angular/core/testing";
 
@@ -13,8 +13,8 @@ describe("Document testing", () => {
 
     let app: firebase.app.App;
     let afs: AngularFirestore;
-  
-  
+
+
     beforeAll(() => {
       jasmine.DEFAULT_TIMEOUT_INTERVAL = 1200000;
       TestBed.configureTestingModule({
@@ -25,11 +25,11 @@ describe("Document testing", () => {
         ]
       });
       inject([FirebaseApp, AngularFirestore], (_app: firebase.app.App, _afs: AngularFirestore) => {
-  
+
         app = _app;
         afs = _afs;
       })();
-  
+
     });
 
     it("should throw a error for a empty query array", ()=>{
@@ -44,7 +44,7 @@ describe("Document testing", () => {
         let q1 = new Query("id", "==", "2");
         let q2 = new Query("name", "==", "Leonardo");
         let r;
-        
+
         afs.collection("usuarios", ref=>r = ref);
         let x = r.where("id", "==", "");
         let multipleQuery = Query.buildMultipleQuery(r, [q1, q2]);
@@ -52,3 +52,4 @@ describe("Document testing", () => {
     })
 
 });
+ */

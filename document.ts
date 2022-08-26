@@ -1,5 +1,5 @@
 import { throws } from 'assert';
-import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/firestore';
+import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/compat/firestore';
 import { Observable, forkJoin, Subject } from 'rxjs';
 
 import { AppInjector } from './app-injector';

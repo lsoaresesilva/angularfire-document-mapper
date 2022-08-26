@@ -1,26 +1,13 @@
-import { inject, TestBed } from "@angular/core/testing";
-import { AngularFirestore } from '@angular/fire/firestore';
+/* import { inject, TestBed } from "@angular/core/testing";
+import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { Document } from '../document';
 import { DocumentModule } from '../document.module';
-import { AngularFireModule } from '@angular/fire';
+import { AngularFireModule } from '@angular/fire/compat';
 
 describe("Example of testing", ()=>{
 
 
-    /*beforeAll(()=>{
-        TestBed.configureTestingModule({
-            imports: [
-              DocumentModule,
-              AngularFireModule.initializeApp(FirebaseConfiguracao),
-              AngularFirestoreModule//.enablePersistence()
-            ]
-          });
-          inject([FirebaseApp, AngularFirestore], (_app: firebase.app.App, _afs: AngularFirestore) => {
-      
-            app = _app;
-            afs = _afs;
-          })();
-    })*/
+
 
     it("Bla", done=>{
         inject( [AngularFirestore], ( afs ) => {
@@ -37,3 +24,4 @@ describe("Example of testing", ()=>{
         })
     })
 })
+ */

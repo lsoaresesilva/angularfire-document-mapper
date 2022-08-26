@@ -1,5 +1,5 @@
 import { throws } from 'assert';
-import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/firestore';
+import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/compat/firestore';
 import { Observable, forkJoin, Subject } from 'rxjs';
 
 import { AppInjector } from './app-injector';
@@ -70,7 +70,7 @@ export function date() {
     if(target.__date != null){
       target.__date.push(property);
     }
-   
+
   }
 
   // return the decorator
@@ -146,7 +146,7 @@ export class Document {
 
     this.constructDateObjects();
   }
-  
+
 
   static getAngularFirestore() {
     return AppInjector.get(AngularFirestore);
@@ -180,12 +180,12 @@ export class Document {
   }
 
   static onDocumentUpdate(id, callback:Subject<any>){
-    
+
     const db = this.getAngularFirestore();
 
     Document.prerequisitos(this['__name'], db);
 
-  
+
     const n = this['__name'];
     const document: any = db.doc<any>(this['__name'] + '/' + id);
 
@@ -194,11 +194,11 @@ export class Document {
       callback.next(object);
       //callback.complete();
     });
-      
+
       /* document.get({ source: 'server' }).subscribe((result) => {
         try {
           let retrievedDocument = new FireStoreDocument(result).toObject(this['prototype']);
- 
+
           observer.next(retrievedDocument);
           observer.complete();
         } catch (e) {
@@ -259,7 +259,7 @@ export class Document {
       document.get({ source: 'server' }).subscribe((result) => {
         try {
           let retrievedDocument = new FireStoreDocument(result).toObject(this['prototype']);
- 
+
           observer.next(retrievedDocument);
           observer.complete();
         } catch (e) {
@@ -277,8 +277,8 @@ export class Document {
       const db = this.getAngularFirestore();
       const objetos = [];
       const collection = db.collection(this['__name'], (ref) => ref.orderBy(query.column).startAt(query.value).endAt(query.value+"\uf8ff"));
-      
-     
+
+
 
       collection.get({ source: 'server' }).subscribe(
         (resultados) => {
@@ -343,7 +343,7 @@ export class Document {
         observer.complete()
       })
     })
-    
+
   }
 
   static getAll(query = null, orderBy = null): Observable<any[]> {
@@ -547,5 +547,5 @@ export class Document {
     });
   }
 
-  
+
 }
