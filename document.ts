@@ -1,4 +1,3 @@
-import { throws } from 'assert';
 import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/firestore';
 import { Observable, forkJoin, Subject } from 'rxjs';
 
