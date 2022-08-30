@@ -1,7 +1,7 @@
 /* import { Document, Collection, oneToOne } from '../document';
-import { AngularFirestore, AngularFirestoreModule } from '@angular/fire/compat/firestore';
+import { AngularFirestore, AngularFirestoreModule } from '@angular/fire/firestore';
 import { TestBed, inject } from '@angular/core/testing';
-import { AngularFireModule, FirebaseApp } from '@angular/fire/compat';
+import { AngularFireModule, FirebaseApp } from '@angular/fire';
 import { FirebaseConfiguracao } from 'src/environments/firebase';
 import { DocumentModule } from '../document.module';
 import { FireStoreDocument } from '../firestoreDocument';

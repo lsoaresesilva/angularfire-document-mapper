@@ -1,8 +1,8 @@
 /* import { inject, TestBed } from "@angular/core/testing";
-import { AngularFirestore } from '@angular/fire/compat/firestore';
+import { AngularFirestore } from '@angular/fire/firestore';
 import { Document } from '../document';
 import { DocumentModule } from '../document.module';
-import { AngularFireModule } from '@angular/fire/compat';
+import { AngularFireModule } from '@angular/fire';
 
 describe("Example of testing", ()=>{
 
