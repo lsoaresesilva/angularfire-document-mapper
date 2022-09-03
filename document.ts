@@ -1,10 +1,11 @@
 import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/firestore';
-import { Observable, forkJoin, Subject } from 'rxjs';
+import { Observable, forkJoin, Subject, observable } from 'rxjs';
 
 import { AppInjector } from './app-injector';
 import { FireStoreDocument } from './firestoreDocument';
 import Query from './query';
 import * as firebase from 'firebase';
+import DocumentTest, { DocumentSalvo } from './documentTest';
 
 export default class DocumentNotFoundError extends Error {}
 
@@ -66,7 +67,7 @@ export function date() {
       });
     }
     target.property = '';
-    if(target.__date != null){
+    if (target.__date != null) {
       target.__date.push(property);
     }
 
@@ -135,16 +136,20 @@ class ExtendableProxy {
 
 export class Document {
 
-  db: AngularFirestore;
-  doc; // Reference to the document
-
   constructor(public id) {
-    this.db = AppInjector.get(AngularFirestore);
+    this.init();
     /*const settings = { experimentalForceLongPolling: true };
         this.db.firestore.app.firestore().settings( settings );*/
 
-    this.constructDateObjects();
+
   }
+
+  static isModoTeste = false;
+  static documentTeste:DocumentTest = new DocumentTest();
+  db: AngularFirestore;
+  doc; // Reference to the document
+
+
 
 
   static getAngularFirestore() {
@@ -478,6 +483,27 @@ export class Document {
     }
   }
 
+  static rastrearPersistencia(){
+    this.isModoTeste = true;
+  }
+
+  static batchSave(objects:Document[]):Observable<any>{
+    return new Observable(observable=>{
+      if(Array.isArray(objects)){
+        const multipleSaveRequest = [];
+        objects.forEach(object=>{
+          multipleSaveRequest.push(object.save());
+        });
+
+        forkJoin(multipleSaveRequest).subscribe(results=>{
+          observable.next(results);
+          observable.complete();
+        })
+      }
+
+    })
+  }
+
   /**
    * @date annotation does not create date properties in Documents child's class. This method create those properties (empty as they will be populated when sent to database).
    */
@@ -487,6 +513,16 @@ export class Document {
         this[dateObject] = '';
       });
     }
+  }
+
+
+
+  init(){
+    if(this.db == null){
+      this.db = AppInjector.get(AngularFirestore);
+    }
+
+    this.constructDateObjects();
   }
 
   /**
@@ -572,6 +608,14 @@ export class Document {
             .add(document)
             .then((result) => {
               ___this.id = result.id;
+              if (Document.isModoTeste) {
+                let documentSalvo:DocumentSalvo = {
+                  nomeColecao:this.constructor['__name'],
+                  id:result.id
+                }
+                Document.documentTeste.incluirDocument(documentSalvo);
+              }
+
               observer.next(___this);
               observer.complete();
             })

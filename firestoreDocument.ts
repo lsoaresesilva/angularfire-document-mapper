@@ -72,7 +72,7 @@ export class FireStoreDocument {
     }
 
     let x = Object.create(prototype);
-    //x.constructor.call();
+    x.init();
     for (let key in primitiveData) {
       x[key] = primitiveData[key];
     }
