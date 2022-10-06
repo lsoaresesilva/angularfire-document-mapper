@@ -578,6 +578,13 @@ export class Document {
     return object;
   }
 
+  /**
+   * Called right before the instance is converted to Firestore document and saved in the database.
+   */
+  priorToSave() {
+
+  }
+
   save(): Observable<any> {
     Document.prerequisitos(this.constructor['__name'], this.db);
 
@@ -585,6 +592,7 @@ export class Document {
 
     return new Observable((observer) => {
       try {
+        this.priorToSave();
         const document = ___this.objectToDocument();
 
         if (document['id'] != undefined) {
