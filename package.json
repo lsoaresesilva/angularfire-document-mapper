@@ -1,6 +1,6 @@
 {
   "name": "firema",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Firestore Mapper is a library designed to reduce the Firestore's boilplate code used to manipulate the database. Every operation on database with Firebase API is a tedious and repetitive task. The aim of this project is to ease this process.",
   "main": "index.js",
   "type": "module",
