@@ -1,3 +1,3 @@
 import { Usuario } from './usuario.js';
-let usuarios = await Usuario.getAll();
-console.log(usuarios);
+let usuario = new Usuario("0qtrsSWQysGD4YuIZT0s", "Leonardo Soares");
+usuario.save();

@@ -2,8 +2,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 import { Observable, forkJoin, Subject, observable } from "rxjs";
 import { FirebaseConfig } from "./firebaseConfig.js";
-import { getFirestore, collection, getDocs } from 'firebase/firestore/lite';
-import { doc } from "firebase/firestore";
+import { doc, collection, getDocs, addDoc, updateDoc } from 'firebase/firestore/lite';
 import { FireStoreDocument } from './firestoreDocument.js';
 export function Collection(nome) {
   return function (target) {
@@ -53,12 +52,13 @@ export function date() {
 export class Document {
   // Reference to the document
   constructor(id) {
-    _defineProperty(this, "id", void 0);
-
     _defineProperty(this, "doc", void 0);
 
+    _defineProperty(this, "__name", null);
+
+    _defineProperty(this, "id", void 0);
+
     this.id = id;
-    this.init();
   }
   /**
    * Returns a single document based on a query
@@ -66,22 +66,25 @@ export class Document {
    * @param {*} orderBy
    */
 
-
-  static getByQuery(query, orderBy = null) {
-    return new Observable(observer => {
-      this.getAll(query, orderBy).subscribe(resultado => {
-        if (resultado.length > 0) {
-          observer.next(resultado[0]);
-          observer.complete();
-        } else {
-          observer.next(null);
-          observer.complete();
+  /* static getByQuery(query, orderBy = null) {
+    return new Observable((observer) => {
+      this.getAll(query, orderBy).subscribe(
+        (resultado) => {
+          if (resultado.length > 0) {
+            observer.next(resultado[0]);
+            observer.complete();
+          } else {
+            observer.next(null);
+            observer.complete();
+          }
+        },
+        (err) => {
+          observer.error(err);
         }
-      }, err => {
-        observer.error(err);
-      });
+      );
     });
-  }
+  } */
+
 
   static async getAll(query = null, orderBy = null) {
     const objetos = [];
@@ -120,7 +123,45 @@ export class Document {
 
   priorToSave() {}
 
-  objectToDocument() {}
+  objectToDocument() {
+    const object = {};
+    const x = Reflect.ownKeys(this);
+    Reflect.ownKeys(this).forEach(propriedade => {
+      const propriedadesIgnoradas = this['__ignore'];
+
+      if (typeof this[propriedade] != 'function' && typeof this[propriedade] != 'undefined'
+      /* && typeof this[propriedade] != "object"*/
+      ) {
+        if (this['__ignore'] == undefined || this['__ignore'] != undefined && !this['__ignore'].includes(propriedade)) {
+          if (this['__date'] != undefined && this['__date'].includes(propriedade)) {
+            object[propriedade] = firebase.firestore.FieldValue.serverTimestamp();
+          } else {
+            // aqui usar o __oneToOne
+            const tipo = typeof this[propriedade];
+
+            if (typeof this[propriedade] == 'object') {
+              if (this['__oneToOne'] != undefined && this['__oneToOne'].length > 0) {
+                for (let i = 0; i < this['__oneToOne'].length; i++) {
+                  if (this['__oneToOne'][i].property == propriedade && typeof this[propriedade].pk === 'function') {
+                    object[this['__oneToOne'][i].foreignKeyName] = this[propriedade].pk();
+                    break;
+                  }
+                }
+              }
+            } else {
+              object[propriedade] = this[propriedade];
+            }
+          }
+        }
+      }
+    });
+
+    if (this.id != undefined) {
+      object['id'] = this.id;
+    }
+
+    return object;
+  }
 
   async save() {
     let db = FirebaseConfig.getConnection();
@@ -140,10 +181,10 @@ export class Document {
     }
 
     try {
-      const docRef = id == null ? await addDoc(collection(db, "cities"), document) : await updateDoc(doc(db, this.constructor["__name"], id), data);
+      const docRef = id == null ? await addDoc(collection(db, this.constructor["__name"]), document) : await updateDoc(doc(db, this.constructor["__name"], id), document);
       return ___this;
     } catch (error) {
-      throw new Error(err);
+      throw new Error(error);
     }
     /* if (document["id"] != undefined) {
       const docRef = doc(db, this.constructor["__name"], document["id"]);

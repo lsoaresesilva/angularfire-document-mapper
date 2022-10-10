@@ -1,8 +1,8 @@
 import { Observable, forkJoin, Subject, observable } from "rxjs";
 import { FirebaseConfig } from "./firebaseConfig.js";
 
-import { getFirestore, collection, getDocs } from 'firebase/firestore/lite';
-import { doc } from "firebase/firestore";
+import { doc, collection, getDocs, addDoc, updateDoc} from 'firebase/firestore/lite';
+
 import {FireStoreDocument} from './firestoreDocument.js';
 
 export function Collection(nome) {
@@ -52,12 +52,13 @@ export function date() {
 }
 
 export class Document {
-  id;
+  
   doc; // Reference to the document
-
+  __name = null;
+  id;
+  
   constructor(id) {
     this.id = id;
-    this.init();
   }
 
   /**
@@ -65,7 +66,7 @@ export class Document {
    * @param {*} query an instance of the DocMapQuery.
    * @param {*} orderBy
    */
-  static getByQuery(query, orderBy = null) {
+  /* static getByQuery(query, orderBy = null) {
     return new Observable((observer) => {
       this.getAll(query, orderBy).subscribe(
         (resultado) => {
@@ -82,7 +83,7 @@ export class Document {
         }
       );
     });
-  }
+  } */
 
   static async getAll(query = null, orderBy = null) {
     const objetos = [];
@@ -127,7 +128,51 @@ export class Document {
    */
   priorToSave() {}
 
-  objectToDocument() {}
+  objectToDocument() {
+    const object = {};
+
+    const x = Reflect.ownKeys(this);
+    Reflect.ownKeys(this).forEach((propriedade) => {
+      const propriedadesIgnoradas = this['__ignore'];
+      if (
+        typeof this[propriedade] != 'function' &&
+        typeof this[propriedade] != 'undefined' /* && typeof this[propriedade] != "object"*/
+      ) {
+        if (
+          this['__ignore'] == undefined ||
+          (this['__ignore'] != undefined && !this['__ignore'].includes(propriedade))
+        ) {
+          if (this['__date'] != undefined && this['__date'].includes(propriedade)) {
+            object[propriedade] = firebase.firestore.FieldValue.serverTimestamp();
+          } else {
+            // aqui usar o __oneToOne
+            const tipo = typeof this[propriedade];
+            if (typeof this[propriedade] == 'object') {
+              if (this['__oneToOne'] != undefined && this['__oneToOne'].length > 0) {
+                for (let i = 0; i < this['__oneToOne'].length; i++) {
+                  if (
+                    this['__oneToOne'][i].property == propriedade &&
+                    typeof this[propriedade].pk === 'function'
+                  ) {
+                    object[this['__oneToOne'][i].foreignKeyName] = this[propriedade].pk();
+                    break;
+                  }
+                }
+              }
+            } else {
+              object[propriedade] = this[propriedade];
+            }
+          }
+        }
+      }
+    });
+
+    if (this.id != undefined) {
+      object['id'] = this.id;
+    }
+
+    return object;
+  }
 
   async save() {
     let db = FirebaseConfig.getConnection();
@@ -145,12 +190,12 @@ export class Document {
 
     try {
       const docRef = id == null ? 
-      await addDoc(collection(db, "cities"), document) : 
-      await updateDoc(doc(db, this.constructor["__name"], id), data);
+      await addDoc(collection(db, this.constructor["__name"]), document) : 
+      await updateDoc(doc(db, this.constructor["__name"], id), document);
       
-      return ___this
+      return ___this;
     } catch (error) {
-      throw new Error(err);
+      throw new Error(error);
     }
     
       
