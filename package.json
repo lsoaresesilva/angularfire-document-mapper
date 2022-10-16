@@ -1,13 +1,14 @@
 {
   "name": "firema",
-  "version": "0.0.1",
-  "description": "Firestore Mapper is a library designed to reduce the Firestore's boilplate code used to manipulate the database. Every operation on database with Firebase API is a tedious and repetitive task. The aim of this project is to ease this process.",
+  "version": "0.0.4",
+  "description": "Firestore Mapper is a library designed to ease the use of Firestore database in Javascript-based applications (e.g., Angular, Vue, React, among others). The use of Firestore's official API involves numerous boilplate code. The aim of this project is to ease this process.",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "build": "babel index.js firebaseConfig.js firestoreDocument.js -d dist",
     "start": "npm run build && node dist/index.js",
-    "test": " npm run build && babel tests/index_test.js tests/usuario.js -d dist && node dist/index_test.js"
+    "test": "./node_modules/.bin/babel-node --trace-warnings spec/run.js",
+    "debug": "./node_modules/.bin/babel-node --trace-warnings --inspect-brk spec/run.js"
   },
   "repository": {
     "type": "git",
@@ -20,7 +21,7 @@
   },
   "homepage": "https://github.com/lsoaresesilva/angularfire-document-mapper#readme",
   "dependencies": {
-    "dotenv": "^16.0.3",
+    "babel-cli": "^6.26.0",
     "firebase": "^9.11.0",
     "rxjs": "^7.5.7"
   },
@@ -29,6 +30,12 @@
     "@babel/core": "^7.19.3",
     "@babel/plugin-proposal-class-properties": "^7.18.6",
     "@babel/plugin-proposal-decorators": "^7.19.3",
-    "@babel/preset-env": "^7.19.3"
+    "@babel/preset-env": "^7.19.3",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-register": "^6.26.0",
+    "jasmine": "^4.4.0",
+    "jasmine-browser-runner": "^1.2.0",
+    "jasmine-core": "^4.4.0",
+    "mocha": "^10.0.0"
   }
 }

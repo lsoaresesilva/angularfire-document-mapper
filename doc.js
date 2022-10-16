@@ -3,7 +3,7 @@ import { Observable, forkJoin } from 'rxjs';
 /**
  * Representação de um documento Firestore
  */
-export class FireStoreDocument {
+export class Doc {
   id;
   data;
   document;

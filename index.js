@@ -1,9 +1,16 @@
 import { Observable, forkJoin, Subject, observable } from "rxjs";
 import { FirebaseConfig } from "./firebaseConfig.js";
 
-import { doc, collection, getDocs, addDoc, updateDoc} from 'firebase/firestore/lite';
+import {
+  doc,
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc
+} from "firebase/firestore/lite";
 
-import {FireStoreDocument} from './firestoreDocument.js';
+import { Doc } from "./doc.js";
 
 export function Collection(nome) {
   return function (target) {
@@ -51,12 +58,27 @@ export function date() {
   return actualDecorator;
 }
 
-export class Document {
+export class FirestoreDocumentTesting {
+  static records = new Map(); // An array composed of maps <Collection, ids[]> with the ids that were generated from a specific collection.
   
+  static track(collectionName, id){
+    if(this.records.get(collectionName) == null){
+      this.records.set(collectionName, []);
+    }
+
+    this.records.get(collectionName).push(id);
+  }
+
+  static reset(){
+
+  }
+}
+
+export class FirestoreDocument {
   doc; // Reference to the document
   __name = null;
   id;
-  
+
   constructor(id) {
     this.id = id;
   }
@@ -88,38 +110,23 @@ export class Document {
   static async getAll(query = null, orderBy = null) {
     const objetos = [];
     let db = FirebaseConfig.getConnection();
-    Document.prerequisitos(this["__name"], db);
-
-    try {
-      const querySnapshot = await getDocs(collection(db, this["__name"]));
+    FirestoreDocument.prerequisitos(this["__name"], db);
+    const querySnapshot = await getDocs(collection(db, this["__name"]));
     querySnapshot.forEach((doc) => {
       const i = 0;
-      objetos.push(
-        new FireStoreDocument(doc).toObject(this["prototype"])
-      );
+      objetos.push(new Doc(doc).toObject(this["prototype"]));
     });
 
-     return objetos;
-    } catch (error) {
-      throw new Error(error);
-    }
-
-    return new Promise((resolve, reject) => {
-      if(query == null){
-       
-        
-      }
-    });
-
+    return objetos;
   }
 
   static prerequisitos(__name, db) {
     if (__name == undefined || __name == null) {
-      throw new Error("Não foi atribuído um nome para essa collection.");
+      throw new Error("The object does not have a collection name. Did you forget to use the @Collection decorator?");
     }
 
     if (db == undefined || db == null) {
-      throw new Error("Não há uma instância de AngularFirestore.");
+      throw new Error("There is no instance of Firestore. Did you forget to call the FirebaseConfig.init()?");
     }
   }
 
@@ -133,28 +140,38 @@ export class Document {
 
     const x = Reflect.ownKeys(this);
     Reflect.ownKeys(this).forEach((propriedade) => {
-      const propriedadesIgnoradas = this['__ignore'];
+      const propriedadesIgnoradas = this["__ignore"];
       if (
-        typeof this[propriedade] != 'function' &&
-        typeof this[propriedade] != 'undefined' /* && typeof this[propriedade] != "object"*/
+        typeof this[propriedade] != "function" &&
+        typeof this[propriedade] !=
+          "undefined" /* && typeof this[propriedade] != "object"*/
       ) {
         if (
-          this['__ignore'] == undefined ||
-          (this['__ignore'] != undefined && !this['__ignore'].includes(propriedade))
+          this["__ignore"] == undefined ||
+          (this["__ignore"] != undefined &&
+            !this["__ignore"].includes(propriedade))
         ) {
-          if (this['__date'] != undefined && this['__date'].includes(propriedade)) {
-            object[propriedade] = firebase.firestore.FieldValue.serverTimestamp();
+          if (
+            this["__date"] != undefined &&
+            this["__date"].includes(propriedade)
+          ) {
+            object[propriedade] =
+              firebase.firestore.FieldValue.serverTimestamp();
           } else {
             // aqui usar o __oneToOne
             const tipo = typeof this[propriedade];
-            if (typeof this[propriedade] == 'object') {
-              if (this['__oneToOne'] != undefined && this['__oneToOne'].length > 0) {
-                for (let i = 0; i < this['__oneToOne'].length; i++) {
+            if (typeof this[propriedade] == "object") {
+              if (
+                this["__oneToOne"] != undefined &&
+                this["__oneToOne"].length > 0
+              ) {
+                for (let i = 0; i < this["__oneToOne"].length; i++) {
                   if (
-                    this['__oneToOne'][i].property == propriedade &&
-                    typeof this[propriedade].pk === 'function'
+                    this["__oneToOne"][i].property == propriedade &&
+                    typeof this[propriedade].pk === "function"
                   ) {
-                    object[this['__oneToOne'][i].foreignKeyName] = this[propriedade].pk();
+                    object[this["__oneToOne"][i].foreignKeyName] =
+                      this[propriedade].pk();
                     break;
                   }
                 }
@@ -168,75 +185,45 @@ export class Document {
     });
 
     if (this.id != undefined) {
-      object['id'] = this.id;
+      object["id"] = this.id;
     }
 
     return object;
   }
 
-  async save() {
+  static async del(id) {
     let db = FirebaseConfig.getConnection();
-    Document.prerequisitos(this.constructor["__name"], db);
+    FirestoreDocument.prerequisitos(this["__name"], db);
+
+    await deleteDoc(doc(db, this['__name'], id));
+  }
+
+  async save() {
+    
+    let db = FirebaseConfig.getConnection();
+    FirestoreDocument.prerequisitos(this.constructor["__name"], db);
 
     const ___this = this;
     this.priorToSave();
-    const document = ___this.objectToDocument();
+    const fireDocument = ___this.objectToDocument();
 
     let id = null;
-    if (document["id"] != undefined) {
-      id = document["id"];
-      delete document["id"]; // id cannot be in the document because it is not an attribute.
+    if (fireDocument["id"] != undefined) {
+      id = fireDocument["id"];
+      delete fireDocument["id"]; // id cannot be in the document because it is not an attribute.
     }
 
-    try {
-      const docRef = id == null ? 
-      await addDoc(collection(db, this.constructor["__name"]), document) : 
-      await updateDoc(doc(db, this.constructor["__name"], id), document);
-      
-      return ___this;
-    } catch (error) {
-      throw new Error(error);
+    const docRef =
+      id == null
+        ? await addDoc(collection(db, this.constructor["__name"]), fireDocument)
+        : await updateDoc(doc(db, this.constructor["__name"], id), fireDocument);
+
+    if(FirebaseConfig.debug == true){
+      FirestoreDocumentTesting.track(this.constructor["__name"], docRef.id);
     }
-    
-      
-        
 
-        
+    ___this.id = docRef.id;
 
-        /* if (document["id"] != undefined) {
-          const docRef = doc(db, this.constructor["__name"], document["id"]);
-          
-          
-          docRef
-            .update(document)
-            .then((result) => {
-              observer.next(___this);
-              observer.complete();
-            })
-            .catch((err) => {
-              observer.error(err);
-            });
-        } else {
-          const collection = db.collection(this.constructor["__name"]);
-
-          collection
-            .add(document)
-            .then((result) => {
-              ___this.id = result.id;
-              if (Document.isModoTeste) {
-                let documentSalvo = {
-                  nomeColecao: this.constructor["__name"],
-                  id: result.id,
-                };
-              }
-
-              observer.next(___this);
-              observer.complete();
-            })
-            .catch((err) => {
-              observer.error(err);
-            });
-        } */
-      
+    return ___this;
   }
 }

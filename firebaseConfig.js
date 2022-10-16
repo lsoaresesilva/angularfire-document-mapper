@@ -1,4 +1,3 @@
-import * as dotenv from 'dotenv';
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore/lite';
 
@@ -8,33 +7,38 @@ export class FirebaseConfig {
     static app;
     static db;
 
-    static firebaseConfig;
+    static configData;
+    static debug;
+
+    static init(config, debug = false){
+        if(config == null || config.apiKey == null ||
+           config.authDomain == null ||
+           config.projectId == null ||
+           config.appId == null){
+            throw new Error("Missing a complete Firebase configuration.");
+           }
+
+           this.debug = debug;
+
+           this.configData = {
+            apiKey: config.apiKey,
+            authDomain: config.authDomain,
+            projectId: config.projectId,
+/*             storageBucket: config.storageBucket,
+            messagingSenderId: config.messagingSenderId, */
+            appId: config.appId
+        }
+        
+    }
 
     static getConnection(){
+        if(this.configData == null){
+            throw new Error("It is not possible to initiate a Firebase connection without a Firebase Configuration. Please, call init method first.")
+        }
+
         if(this.app == null && this.db == null){
-            dotenv.config();
-           /*  this.firebaseConfig = {
-                apiKey: process.env.apiKey,
-                authDomain: process.env.authDomain,
-                databaseURL: process.env.databaseURL,
-                projectId: process.env.projectId,
-                storageBucket: process.env.storageBucket,
-                messagingSenderId: process.env.messagingSenderId,
-                appId: process.env.appId
-            } */
-            this.firebaseConfig = {
-                apiKey: process.env.apiKey,
-                authDomain: process.env.authDomain,
-                databaseURL: process.env.databaseURL,
-                projectId: process.env.projectId,
-                storageBucket: process.env.storageBucket,
-                messagingSenderId: process.env.messagingSenderId,
-                appId: process.env.appId
-            }
-            this.app = initializeApp(this.firebaseConfig);
+            this.app = initializeApp(this.configData);
             this.db  = getFirestore(this.app);
-        }else{
-            x = 2;
         }
 
         return this.db;
